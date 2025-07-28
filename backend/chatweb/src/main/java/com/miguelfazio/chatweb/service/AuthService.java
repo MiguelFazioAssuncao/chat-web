@@ -1,5 +1,6 @@
 package com.miguelfazio.chatweb.service;
 
+import com.miguelfazio.chatweb.dto.LoginRequest;
 import com.miguelfazio.chatweb.dto.RegisterRequest;
 import com.miguelfazio.chatweb.entity.User;
 import com.miguelfazio.chatweb.repository.UserRepository;
@@ -25,6 +26,17 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        return jwtService.generateToken(user);
+    }
+
+    public String login(LoginRequest request) {
+        var user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
 
         return jwtService.generateToken(user);
     }
