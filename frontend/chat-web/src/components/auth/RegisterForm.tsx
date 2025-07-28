@@ -88,7 +88,7 @@ const RegisterForm = () => {
 
           <p className="mt-6 text-center text-sm text-gray-400">
             Don’t have an account?{" "}
-            <a href="#" className="text-blue-400 hover:underline">
+            <a href="/auth/login" className="text-blue-400 hover:underline">
               Sign in
             </a>
           </p>
