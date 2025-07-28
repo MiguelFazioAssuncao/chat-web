@@ -1,7 +1,9 @@
 package com.miguelfazio.chatweb.controller;
 
+import com.miguelfazio.chatweb.dto.ForgotPasswordRequest;
 import com.miguelfazio.chatweb.dto.LoginRequest;
 import com.miguelfazio.chatweb.dto.RegisterRequest;
+import com.miguelfazio.chatweb.dto.ResetPasswordRequest;
 import com.miguelfazio.chatweb.repository.UserRepository;
 import com.miguelfazio.chatweb.service.AuthService;
 import jakarta.validation.Valid;
@@ -36,4 +38,21 @@ public class AuthController {
         var token = authService.login(request);
         return ResponseEntity.ok(token);
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        authService.sendResetEmail(request.email());
+        return ResponseEntity.ok("Recovery email sent");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            authService.resetPassword(request.token(), request.newPassword());
+            return ResponseEntity.ok("Password reset successfully");
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        }
+    }
+
 }
