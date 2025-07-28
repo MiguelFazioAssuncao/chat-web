@@ -1,5 +1,6 @@
 package com.miguelfazio.chatweb.controller;
 
+import com.miguelfazio.chatweb.dto.LoginRequest;
 import com.miguelfazio.chatweb.dto.RegisterRequest;
 import com.miguelfazio.chatweb.repository.UserRepository;
 import com.miguelfazio.chatweb.service.AuthService;
@@ -26,6 +27,12 @@ public class AuthController {
         }
 
         var token = authService.register(request);
+        return ResponseEntity.ok(token);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
+        var token = authService.login(request);
         return ResponseEntity.ok(token);
     }
 }
