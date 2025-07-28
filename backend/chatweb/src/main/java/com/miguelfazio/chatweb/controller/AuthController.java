@@ -4,6 +4,7 @@ import com.miguelfazio.chatweb.dto.LoginRequest;
 import com.miguelfazio.chatweb.dto.RegisterRequest;
 import com.miguelfazio.chatweb.repository.UserRepository;
 import com.miguelfazio.chatweb.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,9 @@ public class AuthController {
     private final UserRepository userRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
         if (userRepository.findByEmail(request.email()).isPresent() || userRepository.findByUsername(request.username()).isPresent()) {
-         return ResponseEntity.status(HttpStatus.CONFLICT).body("Email ou username já existentes");
+         return ResponseEntity.status(HttpStatus.CONFLICT).body("Email or username already exists");
         }
 
         var token = authService.register(request);
