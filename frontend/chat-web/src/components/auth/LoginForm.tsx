@@ -99,7 +99,7 @@ const LoginForm = () => {
               />
               <span>Remember me</span>
             </label>
-            <a href="#" className="text-blue-400 hover:underline">
+            <a href="/auth/forgot-password" className="text-blue-400 hover:underline">
               Forgot password?
             </a>
           </div>
