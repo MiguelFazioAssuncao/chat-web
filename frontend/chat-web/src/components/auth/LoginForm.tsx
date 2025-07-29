@@ -112,27 +112,6 @@ const LoginForm = () => {
             {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
-
-        <div className="mt-6">
-          <p className="text-center text-sm text-gray-400 mb-4">
-            or connect with
-          </p>
-          <div className="flex justify-center space-x-4">
-            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 border border-gray-600 hover:bg-gray-700 transition-colors">
-              <FontAwesomeIcon
-                icon={faGithub}
-                className="cursor-pointer text-white text-xl"
-              />
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 border border-gray-600 hover:bg-gray-700 transition-colors">
-              <FontAwesomeIcon
-                icon={faGoogle}
-                className="cursor-pointer text-white text-xl"
-              />
-            </button>
-          </div>
-        </div>
-
         <p className="mt-6 text-center text-sm text-gray-400">
           Don’t have an account?{" "}
           <a href="/auth/register" className="text-blue-400 hover:underline">
