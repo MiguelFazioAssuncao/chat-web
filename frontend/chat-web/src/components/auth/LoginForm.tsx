@@ -38,7 +38,7 @@ const LoginForm = () => {
       
       login(token);
       setSuccess(true);
-      navigate("/home")
+      navigate("/app")
       
     } catch (err: any) {
       if (err.response) {
