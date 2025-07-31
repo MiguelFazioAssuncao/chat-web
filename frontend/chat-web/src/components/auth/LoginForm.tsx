@@ -1,8 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 import Logo from "../../assets/chatWebLogo.png";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGithub, faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -11,6 +11,8 @@ const LoginForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,14 +27,19 @@ const LoginForm = () => {
         { headers: { "Content-Type": "application/json" } }
       );
 
-      console.log("Token:", response.data);
-      setSuccess(true);
+      const token = response.data;
 
       if (rememberMe) {
-        localStorage.setItem("token", response.data);
+        localStorage.setItem("token", token);
       } else {
-        sessionStorage.setItem("token", response.data);
+        sessionStorage.setItem("token", token);
       }
+
+      
+      login(token);
+      setSuccess(true);
+      navigate("/home")
+      
     } catch (err: any) {
       if (err.response) {
         setError(err.response.data || "Login error");
