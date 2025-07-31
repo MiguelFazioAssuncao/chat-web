@@ -1,8 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
 import Logo from "../../assets/chatWebLogo.png";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGithub, faGoogle } from "@fortawesome/free-brands-svg-icons";
 
 const RegisterForm = () => {
   const [username, setUsername] = useState("");
