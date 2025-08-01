@@ -5,6 +5,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import { AuthProvider } from "./context/AuthContext";
 import ResetPasswordRoute from "./routes/ResetPasswordRoute";
+import PrivateRoute from "./routes/PrivateRoute";
+import AppLayout from "./pages/app/AppLayout";
 
 function App() {
   return (
@@ -18,6 +20,10 @@ function App() {
 
           <Route element={<ResetPasswordRoute />}>
             <Route path="/auth/reset-password" element={<ResetPassword />} />
+          </Route>
+
+          <Route element={<PrivateRoute />}>
+            <Route path="/app" element={<AppLayout />} />
           </Route>
         </Routes>
       </BrowserRouter>
