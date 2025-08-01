@@ -10,14 +10,30 @@ import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.PostConstruct;
+import java.util.Base64;
+import java.util.UUID;
+
 @Service
 public class JwtService {
-    private final Key JWT_SECRET = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+    @Value("${app.jwt.reset-secret}")
+    private String jwtSecretEncoded;
+
+    private Key JWT_SECRET;
+
     private static final Duration EXPIRATION_TIME = Duration.ofDays(1);
+
+    @PostConstruct
+    public void init() {
+        byte[] secretBytes = Base64.getDecoder().decode(jwtSecretEncoded);
+        JWT_SECRET = Keys.hmacShaKeyFor(secretBytes);
+    }
 
     public String generateToken(User user) {
         return Jwts.builder()
-                .setSubject(user.getUsername())
+                .setSubject(user.getId().toString())
                 .claim("id", user.getId().toString())
                 .claim("email", user.getEmail())
                 .setIssuedAt(new Date())
@@ -26,12 +42,15 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractUsername(String token) {
-        return Jwts.parserBuilder()
+    public UUID extractUserId(String token) {
+        String subject = Jwts.parserBuilder()
                 .setSigningKey(JWT_SECRET)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+        return UUID.fromString(subject);
     }
+
+
 }
