@@ -35,14 +35,17 @@ const LoginForm = () => {
         sessionStorage.setItem("token", token);
       }
 
-      
       login(token);
       setSuccess(true);
-      navigate("/app")
-      
+      navigate("/app");
     } catch (err: any) {
       if (err.response) {
-        setError(err.response.data || "Login error");
+        const data = err.response.data;
+        const message =
+          typeof data === "string"
+            ? data
+            : data?.message || data?.error || "Login error";
+        setError(message);
       } else {
         setError("Could not connect to the server");
       }
@@ -106,7 +109,10 @@ const LoginForm = () => {
               />
               <span>Remember me</span>
             </label>
-            <a href="/auth/forgot-password" className="text-blue-400 hover:underline">
+            <a
+              href="/auth/forgot-password"
+              className="text-blue-400 hover:underline"
+            >
               Forgot password?
             </a>
           </div>

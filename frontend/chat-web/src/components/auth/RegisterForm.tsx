@@ -1,6 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 import Logo from "../../assets/chatWebLogo.png";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm = () => {
   const [username, setUsername] = useState("");
@@ -9,6 +11,8 @@ const RegisterForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ [key: string]: string } | null>(null);
   const [success, setSuccess] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,21 +21,19 @@ const RegisterForm = () => {
     setSuccess(false);
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/auth/register",
-        {
-          username,
-          email,
-          password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.post("http://localhost:8080/auth/register", {
+        username,
+        email,
+        password,
+      });
+
+      const token = response.data;
 
       setSuccess(true);
+
+      login(token);
+
+      navigate("/app");
     } catch (err: any) {
       if (err.response) {
         if (err.response.status === 400 && typeof err.response.data === "object") {
@@ -85,7 +87,9 @@ const RegisterForm = () => {
           </div>
 
           <div>
-            <label className="block mb-1 text-sm font-semibold">Email Address:</label>
+            <label className="block mb-1 text-sm font-semibold">
+              Email Address:
+            </label>
             <input
               type="email"
               value={email}
@@ -100,7 +104,9 @@ const RegisterForm = () => {
           </div>
 
           <div>
-            <label className="block mb-1 text-sm font-semibold">Password:</label>
+            <label className="block mb-1 text-sm font-semibold">
+              Password:
+            </label>
             <input
               type="password"
               value={password}

@@ -10,3 +10,8 @@ html, body {
 * {
     box-sizing: border-box;
 }
+
+:root {
+    --primary-color: #0A1931;
+    --secondary-color: #1F2937;
+}
