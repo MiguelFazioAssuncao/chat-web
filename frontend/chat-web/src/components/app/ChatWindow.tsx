@@ -2,12 +2,20 @@ import { useState } from "react";
 import ChatHeader from "./ChatHeader";
 import UserProfilePanel from "./UserProfilePanel";
 import MessageInput from "./MessageInput";
+import FriendsPanel from "./FriendsPanel";
 
 type MessageType = {
   id: number;
   text: string;
   isSender: boolean;
   timestamp: string;
+};
+
+type ChatWindowProps = {
+  showFriendsPanel: boolean;
+  onCloseFriendsPanel: () => void;
+  userId: string;
+  token: string;
 };
 
 const Message = ({ text, isSender, timestamp }: Omit<MessageType, "id">) => {
@@ -29,10 +37,14 @@ const Message = ({ text, isSender, timestamp }: Omit<MessageType, "id">) => {
   );
 };
 
-const ChatWindow = () => {
+const ChatWindow = ({
+  showFriendsPanel,
+  onCloseFriendsPanel,
+  userId,
+  token,
+}: ChatWindowProps) => {
   const [showProfile, setShowProfile] = useState(false);
   const [message, setMessage] = useState("");
-
   const [messages, setMessages] = useState<MessageType[]>([
     { id: 1, text: "Oi, tudo bem?", isSender: false, timestamp: "15:30" },
     { id: 2, text: "Oi! Tudo ótimo, e você?", isSender: true, timestamp: "15:31" },
@@ -42,7 +54,10 @@ const ChatWindow = () => {
     if (message.trim() === "") return;
 
     const now = new Date();
-    const timestamp = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const timestamp = now.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
     const newMessage: MessageType = {
       id: messages.length + 1,
@@ -57,7 +72,6 @@ const ChatWindow = () => {
 
   return (
     <div className="flex-1 relative bg-[#1C2C3C] flex flex-col">
-      {/* Header fixado no topo */}
       <div className="absolute top-0 left-0 right-0 z-10">
         <ChatHeader
           onToggleProfile={() => setShowProfile((prev) => !prev)}
@@ -65,23 +79,27 @@ const ChatWindow = () => {
         />
       </div>
 
-      {/* Área principal flexível com espaço para painel */}
+      {showFriendsPanel && (
+        <div className="absolute inset-0 z-20 bg-[#1C2C3C] px-4 pt-14 pb-16">
+          <FriendsPanel userId={userId} onClose={onCloseFriendsPanel} />
+        </div>
+      )}
+
       <div className="flex flex-1 pt-14 pb-16">
-        {/* Conteúdo do chat com largura adaptável */}
         <div
-          className={`flex-1 px-4 overflow-y-auto flex flex-col`}
-          style={{ marginRight: showProfile ? 384 : 0 }} // 96 * 4 = 384px largura do painel
+          className="flex-1 px-4 overflow-y-auto flex flex-col"
+          style={{ marginRight: showProfile ? "384px" : 0 }}
         >
           {messages.map(({ id, text, isSender, timestamp }) => (
             <Message key={id} text={text} isSender={isSender} timestamp={timestamp} />
           ))}
         </div>
 
-        {/* UserProfilePanel sem position absolute, ocupa espaço */}
-        {showProfile && <UserProfilePanel visible={true} onClose={() => setShowProfile(false)} />}
+        {showProfile && (
+          <UserProfilePanel visible={true} onClose={() => setShowProfile(false)} />
+        )}
       </div>
 
-      {/* Input fixado embaixo */}
       <div className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-[#1C2C3C] border-t border-gray-700">
         <MessageInput
           value={message}
