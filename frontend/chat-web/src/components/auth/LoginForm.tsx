@@ -28,14 +28,8 @@ const LoginForm = () => {
       );
 
       const token = response.data;
+      login(token, rememberMe);
 
-      if (rememberMe) {
-        localStorage.setItem("token", token);
-      } else {
-        sessionStorage.setItem("token", token);
-      }
-
-      login(token);
       setSuccess(true);
       navigate("/app");
     } catch (err: any) {
