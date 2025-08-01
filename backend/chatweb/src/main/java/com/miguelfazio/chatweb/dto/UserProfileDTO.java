@@ -10,6 +10,15 @@ public record UserProfileDTO(
         String description,
         String avatarUrl
 ) {
+    public static UserProfileDTO fromEntity(User user) {
+        return new UserProfileDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getDescription(),
+                user.getProfileImgUrl()
+        );
+    }
+
     public User toEntity() {
         User user = new User();
         user.setId(id);
