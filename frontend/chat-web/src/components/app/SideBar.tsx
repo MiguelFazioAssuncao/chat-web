@@ -1,39 +1,54 @@
 import ChatList from "./ChatList";
-import { FiUser, FiPlus, FiSearch } from "react-icons/fi";
+import { FiUser, FiPlus, FiSearch, FiUserPlus } from "react-icons/fi";
 import ProfilePanel from "./ProfilePanel";
 import { useState } from "react";
 
-const Sidebar = () => {
+type SidebarProps = {
+  onToggleFriendsPanel: () => void;
+};
+
+const Sidebar = ({ onToggleFriendsPanel }: SidebarProps) => {
   const [showProfile, setShowProfile] = useState(false);
 
   return (
     <aside className="w-72 h-full bg-[#0B1B2B] flex flex-row border-r border-gray-700">
-      {/* Barra de ícones */}
       <div className="w-12 bg-[#152536] flex flex-col items-center justify-between py-4">
         <div className="flex flex-col items-center space-y-4">
-          <button className="w-8 h-8 flex items-center justify-center bg-[#1A2B44] rounded-full hover:bg-[#223A5F] transition">
+          <button
+            className="cursor-pointer w-8 h-8 flex items-center justify-center bg-[#1A2B44] rounded-full hover:bg-[#223A5F] transition"
+            title="Adicionar amigo"
+          >
             <FiPlus className="text-white" size={16} />
           </button>
+          <button
+            onClick={onToggleFriendsPanel}
+            className="cursor-pointer w-8 h-8 flex items-center justify-center bg-[#1A2B44] rounded-full hover:bg-[#223A5F] transition"
+            title="Pedidos de amizade"
+          >
+            <FiUserPlus className="text-white" size={16} />
+          </button>
+
           <div className="w-8 h-8 bg-[#1A2B44] rounded hover:bg-[#223A5F] cursor-pointer" />
           <div className="w-8 h-8 bg-[#1A2B44] rounded hover:bg-[#223A5F] cursor-pointer" />
           <div className="w-8 h-8 bg-[#1A2B44] rounded hover:bg-[#223A5F] cursor-pointer" />
         </div>
 
-        {/* Ícone do perfil com painel */}
         <div className="relative">
           <div
-            onClick={() => setShowProfile(prev => !prev)}
+            onClick={() => setShowProfile((prev) => !prev)}
             className="w-8 h-8 bg-[#1A2B44] rounded-full flex items-center justify-center hover:bg-[#223A5F] cursor-pointer"
             title="Perfil"
           >
             <FiUser className="text-white" size={16} />
           </div>
 
-          <ProfilePanel visible={showProfile} onClose={() => setShowProfile(false)} />
+          <ProfilePanel
+            visible={showProfile}
+            onClose={() => setShowProfile(false)}
+          />
         </div>
       </div>
 
-      {/* Conteúdo da Sidebar */}
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         <h2 className="text-white text-lg font-semibold">Conversas</h2>
         <div className="relative">
