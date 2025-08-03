@@ -30,9 +30,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/friends/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/user-friends/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/messages/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
 
