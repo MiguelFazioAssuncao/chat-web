@@ -1,5 +1,7 @@
 package com.miguelfazio.chatweb.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,33 +28,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        final String path = request.getRequestURI();
+
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("Header Authorization ausente ou mal formatado: " + authHeader);
             filterChain.doFilter(request, response);
             return;
         }
 
         final String jwt = authHeader.substring(7);
 
+        try {
+            jwtService.validateToken(jwt);
+        } catch (ExpiredJwtException e) {
+            System.out.println("Token expirado: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token expirado");
+            return;
+        } catch (JwtException e) {
+            System.out.println("Token inválido: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token inválido");
+            return;
+        }
+
         UUID userId = null;
         String username = null;
 
         try {
             userId = jwtService.extractUserId(jwt);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
             username = jwtService.extractUsername(jwt);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Erro ao extrair dados do token: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token inválido");
+            return;
         }
 
         if ((userId != null || username != null) && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -68,6 +78,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
+            System.out.println("Usuário autenticado: " + userDetails.getUsername());
+        } else {
+            System.out.println("Usuário já autenticado ou token inválido.");
         }
 
         filterChain.doFilter(request, response);
