@@ -5,7 +5,9 @@ import ChatWindow from "../../components/app/ChatWindow";
 import { extractUserIdFromToken } from "../../utils/jwt";
 
 type ChatUser = {
+  id: string;
   username: string;
+  description?: string;
   profileImgUrl?: string;
 };
 

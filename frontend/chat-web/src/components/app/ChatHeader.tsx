@@ -1,5 +1,4 @@
 import { FiUser, FiSearch } from "react-icons/fi";
-import { FaThumbtack } from "react-icons/fa";
 
 type Props = {
   onToggleProfile: () => void;

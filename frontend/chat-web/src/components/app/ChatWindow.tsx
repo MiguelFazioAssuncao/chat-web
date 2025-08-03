@@ -12,7 +12,9 @@ type MessageType = {
 };
 
 type ChatUser = {
+  id: string;
   username: string;
+  description?: string;
   profileImgUrl?: string;
 };
 
@@ -103,8 +105,12 @@ const ChatWindow = ({
           ))}
         </div>
 
-        {showProfile && (
-          <UserProfilePanel visible={true} onClose={() => setShowProfile(false)} />
+        {showProfile && selectedChat && (
+          <UserProfilePanel
+            visible={true}
+            onClose={() => setShowProfile(false)}
+            selectedUser={selectedChat}
+          />
         )}
       </div>
 
