@@ -9,7 +9,12 @@ type Chat = {
   profileImgUrl?: string;
 };
 
-const ChatList = () => {
+type ChatListProps = {
+  filter: string;
+  onSelectChat: (chat: { username: string; profileImgUrl?: string }) => void;
+};
+
+const ChatList = ({ filter, onSelectChat }: ChatListProps) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const { token, loadingAuth } = useAuth();
@@ -19,12 +24,7 @@ const ChatList = () => {
 
     const fetchFriends = async () => {
       try {
-        if (!token) {
-          console.warn("Token is not available yet.");
-          return;
-        }
-
-        console.log("Token:", token);
+        if (!token) return;
 
         const response = await fetch("/api/user-friends", {
           headers: {
@@ -49,16 +49,21 @@ const ChatList = () => {
 
   if (loading || loadingAuth) return <div>Loading friends...</div>;
 
+  const filteredChats = chats.filter((chat) =>
+    chat.username.toLowerCase().includes(filter.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col space-y-2">
-      {chats.length === 0 && <div>No friends found</div>}
-      {chats.map((chat) => (
-        <ChatItem
-          key={chat.id}
-          name={chat.username}
-          lastMessage={chat.lastMessage}
-          profileImgUrl={chat.profileImgUrl}
-        />
+      {filteredChats.length === 0 && <div>No users found</div>}
+      {filteredChats.map((chat) => (
+        <div key={chat.id} onClick={() => onSelectChat(chat)}>
+          <ChatItem
+            name={chat.username}
+            lastMessage={chat.lastMessage}
+            profileImgUrl={chat.profileImgUrl}
+          />
+        </div>
       ))}
     </div>
   );

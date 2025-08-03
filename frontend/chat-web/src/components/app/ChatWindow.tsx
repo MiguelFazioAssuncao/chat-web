@@ -11,11 +11,17 @@ type MessageType = {
   timestamp: string;
 };
 
+type ChatUser = {
+  username: string;
+  profileImgUrl?: string;
+};
+
 type ChatWindowProps = {
   showFriendsPanel: boolean;
   onCloseFriendsPanel: () => void;
   userId: string;
   token: string;
+  selectedChat: ChatUser | null;
 };
 
 const Message = ({ text, isSender, timestamp }: Omit<MessageType, "id">) => {
@@ -41,12 +47,14 @@ const ChatWindow = ({
   showFriendsPanel,
   onCloseFriendsPanel,
   userId,
+  token,
+  selectedChat,
 }: ChatWindowProps) => {
   const [showProfile, setShowProfile] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<MessageType[]>([
-    { id: 1, text: "Oi, tudo bem?", isSender: false, timestamp: "15:30" },
-    { id: 2, text: "Oi! Tudo ótimo, e você?", isSender: true, timestamp: "15:31" },
+    { id: 1, text: "Hey, how are you?", isSender: false, timestamp: "15:30" },
+    { id: 2, text: "I'm great, and you?", isSender: true, timestamp: "15:31" },
   ]);
 
   const handleSend = () => {
@@ -75,6 +83,7 @@ const ChatWindow = ({
         <ChatHeader
           onToggleProfile={() => setShowProfile((prev) => !prev)}
           isProfileOpen={showProfile}
+          selectedUser={selectedChat}
         />
       </div>
 
@@ -104,7 +113,7 @@ const ChatWindow = ({
           value={message}
           onChange={setMessage}
           onSend={handleSend}
-          placeholder="Mensagem"
+          placeholder="Message"
         />
       </div>
     </div>
