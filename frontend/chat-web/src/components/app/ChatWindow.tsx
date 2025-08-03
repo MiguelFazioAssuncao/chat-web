@@ -41,7 +41,6 @@ const ChatWindow = ({
   showFriendsPanel,
   onCloseFriendsPanel,
   userId,
-  token,
 }: ChatWindowProps) => {
   const [showProfile, setShowProfile] = useState(false);
   const [message, setMessage] = useState("");

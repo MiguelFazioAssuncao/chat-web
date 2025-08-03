@@ -33,11 +33,11 @@ const FriendsPanel = ({ userId, onClose }: FriendsPanelProps) => {
       const res = await fetch(`/api/friends/requests/pending?userId=${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to fetch pending requests");
+      if (!res.ok) throw new Error("Failed to fetch pending requests.");
       const data: FriendRequest[] = await res.json();
       setPendingRequests(data);
     } catch {
-      setFeedback({ message: "Error loading pending requests", type: "error" });
+      setFeedback({ message: "Error while loading pending requests.", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -46,11 +46,11 @@ const FriendsPanel = ({ userId, onClose }: FriendsPanelProps) => {
   const handleAddFriend = async () => {
     setFeedback({ message: "", type: null });
     if (!friendEmail) {
-      setFeedback({ message: "Please enter an email", type: "error" });
+      setFeedback({ message: "Please enter a valid email.", type: "error" });
       return;
     }
     if (!token) {
-      setFeedback({ message: "Unauthorized", type: "error" });
+      setFeedback({ message: "Session expired. Please login again.", type: "error" });
       return;
     }
 
@@ -67,21 +67,26 @@ const FriendsPanel = ({ userId, onClose }: FriendsPanelProps) => {
       const text = await res.text();
 
       if (!res.ok) {
-        setFeedback({ message: text || "Failed to send friend request", type: "error" });
+        const message =
+          text.includes("User not found") ? "User not found." :
+          text.includes("cannot send to yourself") ? "You cannot send a request to yourself." :
+          text.includes("already") ? "Request already sent or user is already your friend." :
+          "Failed to send friend request.";
+        setFeedback({ message, type: "error" });
         return;
       }
 
-      setFeedback({ message: `Friend request sent to ${friendEmail}`, type: "success" });
+      setFeedback({ message: `Friend request sent to ${friendEmail}.`, type: "success" });
       setFriendEmail("");
       fetchPendingRequests();
     } catch {
-      setFeedback({ message: "Error sending friend request", type: "error" });
+      setFeedback({ message: "Unexpected error while sending friend request.", type: "error" });
     }
   };
 
   const handleAccept = async (requestId: number) => {
     if (!token) {
-      setFeedback({ message: "Unauthorized", type: "error" });
+      setFeedback({ message: "Invalid session. Please login again.", type: "error" });
       return;
     }
 
@@ -92,23 +97,25 @@ const FriendsPanel = ({ userId, onClose }: FriendsPanelProps) => {
           Authorization: `Bearer ${token}`,
         },
       });
+      const text = await res.text();
       if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Failed to accept friend request: ${errorText}`);
+        const message =
+          text.includes("User not found") ? "User not found." :
+          text.includes("Request not found") ? "Friend request not found." :
+          "Failed to accept friend request.";
+        setFeedback({ message, type: "error" });
+        return;
       }
-      setFeedback({ message: "Friend request accepted", type: "success" });
+      setFeedback({ message: "Friend request accepted successfully.", type: "success" });
       fetchPendingRequests();
-    } catch (error) {
-      setFeedback({
-        message: error instanceof Error ? error.message : "Error accepting friend request",
-        type: "error",
-      });
+    } catch {
+      setFeedback({ message: "Error while accepting friend request.", type: "error" });
     }
   };
 
   const handleDecline = async (requestId: number) => {
     if (!token) {
-      setFeedback({ message: "Unauthorized", type: "error" });
+      setFeedback({ message: "Invalid session. Please login again.", type: "error" });
       return;
     }
 
@@ -119,11 +126,19 @@ const FriendsPanel = ({ userId, onClose }: FriendsPanelProps) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) throw new Error("Failed to reject friend request");
-      setFeedback({ message: "Friend request rejected", type: "success" });
+      const text = await res.text();
+      if (!res.ok) {
+        const message =
+          text.includes("User not found") ? "User not found." :
+          text.includes("Request not found") ? "Friend request not found." :
+          "Failed to decline friend request.";
+        setFeedback({ message, type: "error" });
+        return;
+      }
+      setFeedback({ message: "Friend request declined successfully.", type: "success" });
       fetchPendingRequests();
     } catch {
-      setFeedback({ message: "Error rejecting friend request", type: "error" });
+      setFeedback({ message: "Error while declining friend request.", type: "error" });
     }
   };
 
@@ -135,13 +150,11 @@ const FriendsPanel = ({ userId, onClose }: FriendsPanelProps) => {
     <div className="flex flex-col h-full bg-[#0A1931] text-white p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Add Friend</h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-white">
-          ✕
-        </button>
+        <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
       </div>
 
       <div className="space-y-1">
-        <p className="text-gray-300">You can add friends using their email address.</p>
+        <p className="text-gray-300">Add friends by their email address.</p>
         <div className="flex items-center bg-[#1F2937] rounded-md overflow-hidden">
           <input
             type="email"
@@ -154,13 +167,19 @@ const FriendsPanel = ({ userId, onClose }: FriendsPanelProps) => {
             onClick={handleAddFriend}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 m-1 rounded-md transition"
           >
-            Send Request
+            Send
           </button>
         </div>
         {feedback.message && (
-          <p className={`text-sm mt-1 ${feedback.type === "success" ? "text-green-400" : "text-red-400"}`}>
+          <div
+            className={`mt-2 border-l-4 px-4 py-3 rounded-md text-sm ${
+              feedback.type === "success"
+                ? "border-green-400 bg-green-900 text-green-100"
+                : "border-red-400 bg-red-900 text-red-200"
+            }`}
+          >
             {feedback.message}
-          </p>
+          </div>
         )}
       </div>
 
@@ -169,7 +188,7 @@ const FriendsPanel = ({ userId, onClose }: FriendsPanelProps) => {
         {loading ? (
           <p>Loading...</p>
         ) : pendingRequests.length === 0 ? (
-          <p className="text-gray-400">No pending requests.</p>
+          <p className="text-gray-400">No pending friend requests.</p>
         ) : (
           pendingRequests.map((req) => (
             <div key={req.id} className="bg-[#1F2937] rounded-md p-3 mb-3">
