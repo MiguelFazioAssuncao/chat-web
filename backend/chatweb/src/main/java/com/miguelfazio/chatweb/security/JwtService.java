@@ -1,8 +1,7 @@
 package com.miguelfazio.chatweb.security;
 
 import com.miguelfazio.chatweb.entity.User;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,5 +57,26 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody()
                 .get("email", String.class);
+    }
+
+    public void validateToken(String token) throws JwtException {
+        Jwts.parserBuilder()
+                .setSigningKey(JWT_SECRET)
+                .build()
+                .parseClaimsJws(token);
+    }
+
+    public boolean isTokenExpired(String token) {
+        try {
+            Date expiration = Jwts.parserBuilder()
+                    .setSigningKey(JWT_SECRET)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getExpiration();
+            return expiration.before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true;
+        }
     }
 }
