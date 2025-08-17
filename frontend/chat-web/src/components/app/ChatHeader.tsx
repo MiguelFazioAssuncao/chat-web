@@ -11,7 +11,7 @@ type Props = {
 
 const BASE_URL = "http://localhost:8080/";
 
-const ChatHeader = ({ onToggleProfile, isProfileOpen, selectedUser }: Props) => {
+const ChatHeader = ({ onToggleProfile, isProfileOpen, selectedUser, onSearch, searchValue }: Props & { onSearch: (v: string) => void; searchValue: string }) => {
   const getFullImageUrl = (url?: string) => {
     if (!url) return null;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -48,7 +48,9 @@ const ChatHeader = ({ onToggleProfile, isProfileOpen, selectedUser }: Props) => 
         <div className="relative">
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search message"
+            value={searchValue}
+            onChange={e => onSearch(e.target.value)}
             className="bg-transparent border border-blue-500 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <FiSearch className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white text-sm pointer-events-none" />
