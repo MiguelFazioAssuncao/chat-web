@@ -1,4 +1,4 @@
-import { jwtDecode } from "jwt-decode";
+
 
 export type JwtPayload = {
   sub: string;
@@ -18,3 +18,5 @@ export function extractUserIdFromToken(token: string): string | null {
     return null;
   }
 }
+
+import { jwtDecode } from "jwt-decode";

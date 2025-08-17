@@ -15,3 +15,12 @@ html, body {
     --primary-color: #0A1931;
     --secondary-color: #1F2937;
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
