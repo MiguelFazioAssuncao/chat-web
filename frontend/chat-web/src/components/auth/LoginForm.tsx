@@ -1,8 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 import Logo from "../../assets/chatWebLogo.png";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGithub, faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -11,6 +11,8 @@ const LoginForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,17 +27,19 @@ const LoginForm = () => {
         { headers: { "Content-Type": "application/json" } }
       );
 
-      console.log("Token:", response.data);
-      setSuccess(true);
+      const token = response.data;
+      login(token, rememberMe);
 
-      if (rememberMe) {
-        localStorage.setItem("token", response.data);
-      } else {
-        sessionStorage.setItem("token", response.data);
-      }
+      setSuccess(true);
+      navigate("/app");
     } catch (err: any) {
       if (err.response) {
-        setError(err.response.data || "Login error");
+        const data = err.response.data;
+        const message =
+          typeof data === "string"
+            ? data
+            : data?.message || data?.error || "Login error";
+        setError(message);
       } else {
         setError("Could not connect to the server");
       }
@@ -99,7 +103,10 @@ const LoginForm = () => {
               />
               <span>Remember me</span>
             </label>
-            <a href="#" className="text-blue-400 hover:underline">
+            <a
+              href="/auth/forgot-password"
+              className="text-blue-400 hover:underline"
+            >
               Forgot password?
             </a>
           </div>
@@ -112,27 +119,6 @@ const LoginForm = () => {
             {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
-
-        <div className="mt-6">
-          <p className="text-center text-sm text-gray-400 mb-4">
-            or connect with
-          </p>
-          <div className="flex justify-center space-x-4">
-            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 border border-gray-600 hover:bg-gray-700 transition-colors">
-              <FontAwesomeIcon
-                icon={faGithub}
-                className="cursor-pointer text-white text-xl"
-              />
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 border border-gray-600 hover:bg-gray-700 transition-colors">
-              <FontAwesomeIcon
-                icon={faGoogle}
-                className="cursor-pointer text-white text-xl"
-              />
-            </button>
-          </div>
-        </div>
-
         <p className="mt-6 text-center text-sm text-gray-400">
           Don’t have an account?{" "}
           <a href="/auth/register" className="text-blue-400 hover:underline">

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 import Logo from "../../assets/chatWebLogo.png";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGithub, faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm = () => {
   const [username, setUsername] = useState("");
@@ -11,6 +11,8 @@ const RegisterForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ [key: string]: string } | null>(null);
   const [success, setSuccess] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,21 +21,19 @@ const RegisterForm = () => {
     setSuccess(false);
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/auth/register",
-        {
-          username,
-          email,
-          password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.post("http://localhost:8080/auth/register", {
+        username,
+        email,
+        password,
+      });
+
+      const token = response.data;
 
       setSuccess(true);
+
+      login(token);
+
+      navigate("/app");
     } catch (err: any) {
       if (err.response) {
         if (err.response.status === 400 && typeof err.response.data === "object") {
@@ -87,7 +87,9 @@ const RegisterForm = () => {
           </div>
 
           <div>
-            <label className="block mb-1 text-sm font-semibold">Email Address:</label>
+            <label className="block mb-1 text-sm font-semibold">
+              Email Address:
+            </label>
             <input
               type="email"
               value={email}
@@ -102,7 +104,9 @@ const RegisterForm = () => {
           </div>
 
           <div>
-            <label className="block mb-1 text-sm font-semibold">Password:</label>
+            <label className="block mb-1 text-sm font-semibold">
+              Password:
+            </label>
             <input
               type="password"
               value={password}
@@ -124,19 +128,6 @@ const RegisterForm = () => {
             {loading ? "Registering..." : "Sign Up"}
           </button>
         </form>
-
-        <div className="mt-6">
-          <p className="text-center text-sm text-gray-400 mb-4">or connect with</p>
-          <div className="flex justify-center space-x-4">
-            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 border border-gray-600 hover:bg-gray-700 transition-colors">
-              <FontAwesomeIcon icon={faGithub} className="text-white text-xl" />
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 border border-gray-600 hover:bg-gray-700 transition-colors">
-              <FontAwesomeIcon icon={faGoogle} className="text-white text-xl" />
-            </button>
-          </div>
-        </div>
-
         <p className="mt-6 text-center text-sm text-gray-400">
           Already have an account?{" "}
           <a href="/auth/login" className="text-blue-400 hover:underline">
