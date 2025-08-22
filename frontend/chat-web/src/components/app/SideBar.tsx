@@ -21,18 +21,13 @@ const Sidebar = ({ onToggleFriendsPanel, onSelectChat }: SidebarProps) => {
     <aside className="w-72 h-full bg-[#0B1B2B] flex flex-row border-r border-gray-700">
       <div className="w-12 bg-[#152536] flex flex-col items-center justify-between py-4">
         <div className="flex flex-col items-center space-y-4">
-          <button className="cursor-pointer w-8 h-8 flex items-center justify-center bg-[#1A2B44] rounded-full hover:bg-[#223A5F] transition">
-            <FiPlus className="text-white" size={16} />
-          </button>
           <button
             onClick={onToggleFriendsPanel}
             className="cursor-pointer w-8 h-8 flex items-center justify-center bg-[#1A2B44] rounded-full hover:bg-[#223A5F] transition"
           >
             <FiUserPlus className="text-white" size={16} />
           </button>
-          <div className="w-8 h-8 bg-[#1A2B44] rounded hover:bg-[#223A5F] cursor-pointer" />
-          <div className="w-8 h-8 bg-[#1A2B44] rounded hover:bg-[#223A5F] cursor-pointer" />
-          <div className="w-8 h-8 bg-[#1A2B44] rounded hover:bg-[#223A5F] cursor-pointer" />
+        
         </div>
         <div className="relative">
           <div
