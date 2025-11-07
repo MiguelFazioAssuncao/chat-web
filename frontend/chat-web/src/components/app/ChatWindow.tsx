@@ -6,6 +6,7 @@ import ChatHeader from "./ChatHeader";
 import UserProfilePanel from "./UserProfilePanel";
 import MessageInput from "./MessageInput";
 import FriendsPanel from "./FriendsPanel";
+import { FiTrash2 } from "react-icons/fi";
 
 type MessageType = {
   id: string;
@@ -30,8 +31,17 @@ type ChatWindowProps = {
   selectedChat: ChatUser | null;
 };
 
-const Message = ({ text, isSender, timestamp, highlighted }: { text: string; isSender: boolean; timestamp: string; highlighted?: boolean }) => (
-  <div className={`flex mb-2 ${isSender ? "justify-end" : "justify-start"}` + (highlighted ? " bg-yellow-100/10" : "") }>
+const Message = ({ id, text, isSender, timestamp, highlighted, onDelete }: { id: string; text: string; isSender: boolean; timestamp: string; highlighted?: boolean; onDelete?: (id: string) => void }) => (
+  <div className={`flex mb-2 ${isSender ? "justify-end" : "justify-start"} group` + (highlighted ? " bg-yellow-100/10" : "") }>
+    {isSender && (
+      <button
+        className="invisible group-hover:visible self-center mr-2 text-red-400 hover:text-red-200"
+        title="Excluir mensagem"
+        onClick={() => onDelete?.(id)}
+      >
+        <FiTrash2 size={16} />
+      </button>
+    )}
     <div className={`max-w-xs px-4 py-2 rounded-lg break-words ${isSender ? "bg-green-500 text-white rounded-br-none" : "bg-gray-700 text-gray-100 rounded-bl-none"}` + (highlighted ? " border-2 border-yellow-400" : "") }>
       <p className="text-sm">{text}</p>
       <span className="block text-xs text-gray-300 mt-1 text-right">{timestamp}</span>
@@ -49,6 +59,9 @@ const ChatWindow = ({ showFriendsPanel, onCloseFriendsPanel, userId, token, sele
   const messageRefs = useRef<{ [id: string]: HTMLDivElement | null }>({});
   const clientRef = useRef<Client | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
@@ -109,7 +122,31 @@ const ChatWindow = ({ showFriendsPanel, onCloseFriendsPanel, userId, token, sele
     scrollToBottom();
   };
 
-  // Navigation between results
+  const requestDelete = (id: string) => {
+    setDeleteError(null);
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      await axios.delete(`/api/messages/${deleteId}`, { headers: { Authorization: `Bearer ${token}` } });
+      setMessages(prev => prev.filter(m => m.id !== deleteId));
+      setDeleteId(null);
+    } catch (error) {
+      console.error("Erro ao excluir mensagem", error);
+      setDeleteError("Não foi possível excluir a mensagem.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    if (deleting) return;
+    setDeleteId(null);
+  };
+
   const goToNextResult = () => setSearchIndex(i => (searchResults.length ? (i + 1) % searchResults.length : 0));
   const goToPrevResult = () => setSearchIndex(i => (searchResults.length ? (i - 1 + searchResults.length) % searchResults.length : 0));
 
@@ -137,10 +174,12 @@ const ChatWindow = ({ showFriendsPanel, onCloseFriendsPanel, userId, token, sele
           {messages.map(({ id, text, senderId, timestamp }) => (
             <div ref={el => { messageRefs.current[id] = el; }} key={id}>
               <Message
+                id={id}
                 text={text}
                 isSender={senderId === userId}
                 timestamp={new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 highlighted={!!searchValue && searchResults[searchIndex] === id}
+                onDelete={requestDelete}
               />
             </div>
           ))}
@@ -148,6 +187,19 @@ const ChatWindow = ({ showFriendsPanel, onCloseFriendsPanel, userId, token, sele
         </div>
         {showProfile && selectedChat && <UserProfilePanel visible={true} onClose={() => setShowProfile(false)} selectedUser={selectedChat} />}
       </div>
+      {deleteId && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-lg bg-[#1e293b] border border-gray-700 p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-white">Excluir mensagem</h3>
+            <p className="mt-2 text-sm text-gray-300">Tem certeza que deseja excluir esta mensagem? Esta ação não pode ser desfeita.</p>
+            {deleteError && <p className="mt-2 text-sm text-red-400">{deleteError}</p>}
+            <div className="mt-4 flex justify-end gap-2">
+              <button disabled={deleting} onClick={cancelDelete} className="px-3 py-2 rounded bg-gray-600 text-white hover:bg-gray-500 disabled:opacity-60">Cancelar</button>
+              <button disabled={deleting} onClick={confirmDelete} className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-500 disabled:opacity-60">{deleting ? "Excluindo..." : "Excluir"}</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-[#1C2C3C] border-t border-gray-700">
         <MessageInput value={message} onChange={setMessage} onSend={handleSend} placeholder="Mensagem" />
       </div>
