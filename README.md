@@ -31,12 +31,6 @@ chatweb/
 git clone https://github.com/MiguelFazioAssuncao/chat-web.git
 ```
 
-### Backend
-Veja instruções detalhadas no [HELP.md do backend](./backend/chatweb/HELP.md).
-
-### Frontend
-Veja instruções detalhadas no [README.md do frontend](./frontend/chat-web/README.md).
-
 ##  Estrutura Resumida
 - `backend/chatweb/` - Código do servidor, APIs, autenticação, WebSocket
 - `frontend/chat-web/` - Interface web, autenticação, comunicação em tempo real
