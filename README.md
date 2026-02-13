@@ -1,8 +1,8 @@
 # ChatWeb Monorepo
 
-Bem-vindo ao repositório principal do **ChatWeb**, um projeto monorepo que integra backend e frontend para um sistema de chat moderno e seguro.
+Welcome to the main repository for **ChatWeb**, a monorepo project that integrates backend and frontend for a modern, secure chat system.
 
-##  Estrutura do Projeto
+## Project Structure
 
 ```
 chatweb/
@@ -10,34 +10,54 @@ chatweb/
 │   └── chatweb/ (Spring Boot, Java)
 ├── frontend/
 │   └── chat-web/ (React, TypeScript, Vite)
-└── README.md (este arquivo)
+└── README.md (this file)
 ```
 
-##  Tecnologias Utilizadas
+## Technologies Used
 - **Backend:** Java, Spring Boot, Spring Security, WebSocket, JPA, Maven
 - **Frontend:** React, TypeScript, Vite
-- **Monorepo:** Estrutura organizada para facilitar o desenvolvimento integrado
+- **Monorepo:** Organized structure to support integrated development
 
-##  Vídeo Explicativo
-[Assista ao vídeo explicativo do projeto](https://www.youtube.com/watch?v=SEU_VIDEO_AQUI)
+## Overview Video
+[Watch the project overview video](https://www.youtube.com/watch?v=SEU_VIDEO_AQUI)
 
-##  Documentação
-- [README do Backend](./backend/README.md)
-- [README do Frontend](./frontend/README.md)
+## Documentation
+- [Backend README](./backend/README.md)
+- [Frontend README](./frontend/README.md)
 
-##  Como Clonar e Rodar o Projeto
+## Prerequisites
+- **Java 21** (backend)
+- **Node.js 18+** and **npm** (frontend)
+- **PostgreSQL 14+** (database)
+
+## How to Clone and Run
 
 ```sh
 git clone https://github.com/MiguelFazioAssuncao/chat-web.git
 ```
 
-##  Estrutura Resumida
-- `backend/chatweb/` - Código do servidor, APIs, autenticação, WebSocket
-- `frontend/chat-web/` - Interface web, autenticação, comunicação em tempo real
+## Quick Start
+1. Start the backend (see [backend/README.md](backend/README.md)).
+2. Start the frontend (see [frontend/README.md](frontend/README.md)).
+3. Open the app in your browser after both services are running.
 
-##  Sobre o Projeto
-O ChatWeb é um sistema de chat com autenticação JWT, gerenciamento de usuários, troca de mensagens em tempo real e interface moderna. O objetivo é demonstrar integração entre tecnologias modernas de backend e frontend em uma arquitetura monorepo.
+## Quick Structure
+- `backend/chatweb/` - Server code, APIs, authentication, WebSocket
+- `frontend/chat-web/` - Web UI, authentication, real-time messaging
+
+## Configuration Notes
+- Backend settings live in `backend/chatweb/src/main/resources/application.properties`.
+- Update database, JWT, and mail settings for your environment.
+- Avoid committing secrets. Use environment-specific values when running locally or in production.
+
+## Development Tips
+- Use separate terminals for backend and frontend.
+- If ports are already in use, stop the conflicting process or update the port in the respective config.
+- Keep backend running before launching the frontend for full functionality.
+
+## About the Project
+ChatWeb is a chat system with JWT authentication, user management, real-time messaging, and a modern interface. The goal is to demonstrate integration between modern backend and frontend technologies in a monorepo architecture.
 
 ---
 
-> Para dúvidas, sugestões ou contribuições, fique à vontade para abrir uma issue ou pull request!
+> For questions, suggestions, or contributions, feel free to open an issue or pull request!
