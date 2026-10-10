@@ -14,12 +14,6 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
-      - key: MAIL_HOST
-        sync: false
-      - key: MAIL_USERNAME
-        sync: false
-      - key: MAIL_PASSWORD
-        sync: false
       - key: DB_HOST
         fromDatabase:
           name: chatweb-db
@@ -45,6 +39,6 @@ databases:
   - name: chatweb-db
     plan: free
     region: virginia
-    databaseName: chatweb
-    user: chatweb
+    databaseName: chatweb_db_csbd
+    user: chatweb_db_csbd_user
     ipAllowList: []
