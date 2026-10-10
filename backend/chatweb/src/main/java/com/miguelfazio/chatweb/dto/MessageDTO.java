@@ -9,5 +9,11 @@ public record MessageDTO(
         String senderUsername,
         String receiverUsername,
         String content,
-        LocalDateTime sentAt
-) {}
+        LocalDateTime sentAt,
+        String clientMessageId
+) {
+    public MessageDTO(UUID id, UUID senderId, String senderUsername,
+                      String receiverUsername, String content, LocalDateTime sentAt) {
+        this(id, senderId, senderUsername, receiverUsername, content, sentAt, null);
+    }
+}

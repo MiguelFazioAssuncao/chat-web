@@ -1,200 +1,132 @@
-import { useEffect, useRef, useState } from "react";
-import { FiEdit } from "react-icons/fi";
+import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { FiCamera, FiLogOut, FiCheck } from "react-icons/fi";
+import { useChat } from "../../context/ChatContext";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios";
-
-type ProfilePanelProps = {
-  visible: boolean;
-  onClose: () => void;
-};
-
-const ProfilePanel = ({ visible, onClose }: ProfilePanelProps) => {
-  const { token, logout } = useAuth();
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  const [username, setUsername] = useState("");
-  const [description, setDescription] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [originalProfile, setOriginalProfile] = useState({ username: "", description: "" });
-  const [isEditing, setIsEditing] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  useEffect(() => {
-    if (!visible || !token) return;
-
-    axios
-      .get("http://localhost:8080/api/user/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        setUsername(res.data.username);
-        setDescription(res.data.description ?? "");
-        setAvatarUrl(res.data.avatarUrl ?? "");
-        setOriginalProfile({
-          username: res.data.username,
-          description: res.data.description ?? "",
-        });
-        setIsEditing(false);
-      })
-      .catch(() => {
-        setUsername("");
-        setDescription("");
-        setAvatarUrl("");
-        setOriginalProfile({ username: "", description: "" });
-      });
-  }, [visible, token]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onClose();
-      }
+import { errorMessage } from "../../utils/axiosConfig";
+import Modal from "../ui/Modal";
+import Avatar from "../ui/Avatar";
+export default function ProfilePanel({ onClose }: { onClose: () => void }) {
+  const { profile, updateProfile, uploadAvatar, demo } = useChat();
+  const { logout } = useAuth();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [username, setUsername] = useState(profile.username);
+  const [description, setDescription] = useState(profile.description || "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    try {
+      await updateProfile(username.trim(), description.trim());
+      setSuccess("Perfil atualizado. Ficou com a sua cara!");
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
-
-  if (!visible) return null;
-
-  const handleUpdateProfile = () => {
-    axios
-      .patch(
-        "http://localhost:8080/api/user/profile",
-        { username, description },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      .then(() => {
-        setOriginalProfile({ username, description });
-        setIsEditing(false);
-      });
   };
-
-  const handleAvatarUpload = () => {
-    if (!isEditing) return;
-    if (uploading) return;
-
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-
-    input.onchange = () => {
-      const file = input.files?.[0];
-      if (!file) return;
-
-      const formData = new FormData();
-      formData.append("avatar", file);
-
-      setUploading(true);
-      axios
-        .post("http://localhost:8080/api/user/avatar", formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        })
-        .then((res) => setAvatarUrl(res.data))
-        .finally(() => setUploading(false));
-    };
-
-    input.click();
+  const upload = async (file?: File) => {
+    if (!file) return;
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    try {
+      await uploadAvatar(file);
+      setSuccess("Foto atualizada!");
+    } catch (err) {
+      setError(
+        err instanceof Error && !("isAxiosError" in err)
+          ? err.message
+          : errorMessage(err),
+      );
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   };
-
   return (
-    <div
-      ref={panelRef}
-      className="absolute bottom-16 left-4 w-64 bg-[#334155] text-white p-4 rounded-lg border border-gray-400 shadow-lg z-50"
-    >
-      <div className="flex flex-col items-center space-y-2 relative">
-        <div
-          className={`relative cursor-pointer ${!isEditing ? "pointer-events-none opacity-70" : ""}`}
-          onClick={handleAvatarUpload}
-          title={isEditing ? "Click to change avatar" : ""}
-        >
-          {avatarUrl ? (
-            <img
-              src={`http://localhost:8080/${avatarUrl}`}
-              alt="Avatar"
-              className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src =
-                  "https://via.placeholder.com/64?text=No+Image";
-              }}
-            />
-          ) : (
-            <div className="w-16 h-16 bg-[#1e293b] rounded-full border-2 border-blue-500 flex items-center justify-center">
-              <FiEdit className="text-white" size={20} />
-            </div>
-          )}
-          {isEditing && (
-            <button
-              type="button"
-              className="absolute bottom-0 right-0 bg-blue-500 p-1.5 rounded-full cursor-pointer"
-              title="Change avatar"
-              onClick={handleAvatarUpload}
-            >
-              <FiEdit className="text-white" size={14} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-2">
-        <label className="block text-gray-300 text-sm">Username</label>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          disabled={!isEditing}
-          className="bg-transparent border-b border-gray-500 w-full text-white text-sm outline-none disabled:opacity-50"
+    <Modal title="Seu perfil, sua cara." onClose={onClose}>
+      <div className="profile-photo">
+        <Avatar
+          name={profile.username}
+          src={profile.avatarUrl}
+          size="avatar-large"
         />
-
-        <label className="block text-gray-300 text-sm mt-2">Description</label>
-        <input
-          type="text"
-          value={description}
-          placeholder="no description"
-          onChange={(e) => setDescription(e.target.value)}
-          disabled={!isEditing}
-          className="bg-transparent border-b border-gray-500 w-full text-white text-sm outline-none disabled:opacity-50"
-        />
-
         <button
-          onClick={() => {
-            if (isEditing) {
-              setUsername(originalProfile.username);
-              setDescription(originalProfile.description);
-              setIsEditing(false);
-            } else {
-              setIsEditing(true);
-            }
-          }}
-          className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1.5 rounded-lg transition mt-4"
-          type="button"
+          className="icon-button"
+          disabled={busy}
+          aria-label="Alterar foto de perfil"
+          onClick={() => inputRef.current?.click()}
         >
-          {isEditing ? "Cancel" : "Edit profile"}
+          <FiCamera />
         </button>
-
-        {isEditing && (
-          <button
-            onClick={handleUpdateProfile}
-            className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 rounded-lg transition"
-            type="button"
-            disabled={uploading}
-          >
-            Save
-          </button>
-        )}
+        <input
+          ref={inputRef}
+          className="visually-hidden"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          tabIndex={-1}
+          onChange={(e) => void upload(e.target.files?.[0])}
+        />
+        <small>JPG, PNG ou WebP · Até 5 MB</small>
       </div>
-
-      <button
-        onClick={logout}
-        className="w-full mt-4 bg-gray-400 text-white font-semibold py-1.5 rounded-lg hover:bg-gray-500 transition cursor-pointer"
-        type="button"
-      >
-        Logout
-      </button>
-    </div>
+      <form onSubmit={save}>
+        <div className="field">
+          <label htmlFor="profile-name">Nome de usuário</label>
+          <input
+            id="profile-name"
+            value={username}
+            minLength={3}
+            maxLength={20}
+            required
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="profile-bio">Um pouco sobre você</label>
+          <textarea
+            id="profile-bio"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Seus interesses, uma frase ou só um olá…"
+            maxLength={250}
+            rows={3}
+          />
+          <small>{description.length}/250 caracteres</small>
+        </div>
+        {error && (
+          <p className="feedback feedback-error" role="alert">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p className="feedback feedback-success" role="status">
+            {success}
+          </p>
+        )}
+        <button className="button button-primary button-full" disabled={busy}>
+          {busy ? (
+            "Salvando…"
+          ) : (
+            <>
+              <FiCheck /> Salvar alterações
+            </>
+          )}
+        </button>
+      </form>
+      {demo ? (
+        <Link className="profile-logout" to="/auth/register">
+          Criar uma conta de verdade →
+        </Link>
+      ) : (
+        <button className="profile-logout" onClick={logout}>
+          <FiLogOut /> Sair da minha conta
+        </button>
+      )}
+    </Modal>
   );
-};
-
-export default ProfilePanel;
+}

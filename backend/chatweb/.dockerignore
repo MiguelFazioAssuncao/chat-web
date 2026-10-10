@@ -1,0 +1,6 @@
+target
+.git
+.idea
+uploads
+.env*
+src/main/resources/application-local.properties

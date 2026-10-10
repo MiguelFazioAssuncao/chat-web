@@ -1,94 +1,99 @@
-import axios from "axios";
-import { FiTrash } from "react-icons/fi";
-import { useAuth } from "../../context/AuthContext";
 import { useState } from "react";
-
-type Props = {
-  visible: boolean;
-  onClose: () => void;
-  selectedUser: {
-    id: string;
-    username: string;
-    description?: string;
-    profileImgUrl?: string;
-  };
-};
-
-const UserProfilePanel = ({ visible, onClose, selectedUser }: Props) => {
-  const { token } = useAuth();
+import { FiX, FiTrash2, FiMessageCircle } from "react-icons/fi";
+import { useChat } from "../../context/ChatContext";
+import { errorMessage } from "../../utils/axiosConfig";
+import Avatar from "../ui/Avatar";
+import Modal from "../ui/Modal";
+export default function UserProfilePanel({ onClose }: { onClose: () => void }) {
+  const { selected, removeFriend } = useChat();
   const [confirming, setConfirming] = useState(false);
-
-  if (!visible || !selectedUser) return null;
-
-  const handleRemoveUser = () => {
-    axios
-      .delete(`/api/user-friends/${selectedUser.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(() => {
-        setConfirming(false);
-        onClose();
-      })
-      .catch((err) => console.error("Error removing friend:", err));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (!selected) return null;
+  const remove = async () => {
+    setBusy(true);
+    try {
+      await removeFriend(selected.id);
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
   };
-
   return (
-    <>
-      <div
-        className="w-96 bg-[#0F172A] border-l border-gray-800 shadow-lg absolute right-0"
-        style={{ top: "46.5px", bottom: "64px" }}
-      >
-        <div className="h-48 bg-blue-900 relative">
-          {selectedUser.profileImgUrl && (
-            <img
-              src={`http://localhost:8080/${selectedUser.profileImgUrl}`}
-              alt="Avatar"
-              className="absolute bottom-[-32px] left-4 w-16 h-16 rounded-lg object-cover border-2 border-white"
-            />
-          )}
-        </div>
-        <div className="p-4 mt-8">
-          <h2 className="text-white text-xl font-semibold">
-            {selectedUser.username}
-          </h2>
-          <p className="text-gray-300 text-sm">
-            {selectedUser.description || "No description"}
-          </p>
-          <button
-            onClick={() => setConfirming(true)}
-            className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg flex items-center justify-center space-x-2 transition"
-          >
-            <FiTrash />
-            <span>Remove Friend</span>
-          </button>
-        </div>
+    <aside className="contact-panel" aria-label="Perfil do contato">
+      <div className="contact-panel-top">
+        <span>Sobre esta conexão</span>
+        <button
+          className="icon-button"
+          aria-label="Fechar perfil"
+          onClick={onClose}
+        >
+          <FiX />
+        </button>
       </div>
-
+      <div className="contact-cover">
+        <span>✳</span>
+      </div>
+      <div className="contact-details">
+        <Avatar
+          name={selected.username}
+          src={selected.profileImgUrl}
+          size="avatar-large"
+        />
+        <h2>{selected.username}</h2>
+        <span className="contact-tag">
+          <FiMessageCircle /> Sua conexão no ChatWeb
+        </span>
+        <h3>SOBRE</h3>
+        <p>
+          {selected.description ||
+            "Ainda não escreveu uma descrição. Uma conversa pode ser um bom começo."}
+        </p>
+        <button
+          className="button button-secondary button-full"
+          onClick={onClose}
+        >
+          Voltar à conversa
+        </button>
+        <button className="remove-friend" onClick={() => setConfirming(true)}>
+          <FiTrash2 /> Remover amizade
+        </button>
+      </div>
       {confirming && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-[#1e293b] p-6 rounded-lg shadow-xl w-80 text-center">
-            <h3 className="text-white text-lg font-semibold mb-4">
-              Are you sure you want to remove this user?
-            </h3>
-            <div className="flex justify-between mt-6">
-              <button
-                onClick={() => setConfirming(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg w-full mr-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRemoveUser}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg w-full ml-2"
-              >
-                Confirm
-              </button>
-            </div>
+        <Modal
+          title="Remover esta amizade?"
+          onClose={() => {
+            if (!busy) setConfirming(false);
+          }}
+        >
+          <p className="muted">
+            {selected.username} deixará de aparecer na sua lista de conexões.
+          </p>
+          {error && (
+            <p className="feedback feedback-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="modal-actions">
+            <button
+              className="button button-secondary"
+              disabled={busy}
+              onClick={() => setConfirming(false)}
+            >
+              Cancelar
+            </button>
+            <button
+              className="button button-danger"
+              disabled={busy}
+              onClick={() => void remove()}
+            >
+              {busy ? "Removendo…" : "Remover amizade"}
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
-    </>
+    </aside>
   );
-};
-
-export default UserProfilePanel;
+}

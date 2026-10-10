@@ -41,7 +41,7 @@ public class UserController {
         UUID id = userDetails.getId();
         UserProfileDTO userUpdated = userService.updateProfile(id, userProfileDTO);
 
-        String newToken = jwtService.generateToken(userUpdated.toEntity());
+        String newToken = jwtService.generateToken(userService.getUser(id));
 
         return ResponseEntity.ok().body(Map.of(
                 "token", newToken,

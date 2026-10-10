@@ -1,63 +1,78 @@
-import { FiUser, FiSearch } from "react-icons/fi";
-
-type Props = {
-  onToggleProfile: () => void;
-  isProfileOpen: boolean;
-  selectedUser: {
-    username: string;
-    profileImgUrl?: string; 
-  } | null;
-};
-
-const BASE_URL = "http://localhost:8080/";
-
-const ChatHeader = ({ onToggleProfile, isProfileOpen, selectedUser, onSearch, searchValue }: Props & { onSearch: (v: string) => void; searchValue: string }) => {
-  const getFullImageUrl = (url?: string) => {
-    if (!url) return null;
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    return BASE_URL + url;
-  };
-
+import { FiArrowLeft, FiSearch, FiUser, FiX } from "react-icons/fi";
+import Avatar from "../ui/Avatar";
+import { useChat } from "../../context/ChatContext";
+export default function ChatHeader({
+  onProfile,
+  searching,
+  onToggleSearch,
+  search,
+  onSearch,
+}: {
+  onProfile: () => void;
+  searching: boolean;
+  onToggleSearch: () => void;
+  search: string;
+  onSearch: (value: string) => void;
+}) {
+  const { selected, select, demo } = useChat();
+  if (!selected) return null;
   return (
-    <div className="flex items-center justify-between bg-[#1e293b] px-4 py-2 border-b border-gray-600 shadow z-10">
-      <div className="flex items-center space-x-3">
-        {selectedUser?.profileImgUrl ? (
-          <img
-            src={getFullImageUrl(selectedUser.profileImgUrl) || undefined}
-            alt={selectedUser.username}
-            className="w-6 h-6 rounded-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://via.placeholder.com/24?text=No+Img";
-            }}
-          />
-        ) : (
-          <div className="w-6 h-6 rounded-full bg-[#0f172a]" />
-        )}
-        <span className="text-white text-sm">
-          {selectedUser?.username || "No user selected"}
-        </span>
-      </div>
-
-      <div className="flex items-center space-x-3">
-        <div
-          className={`p-1 rounded ${isProfileOpen ? "bg-blue-500" : ""} cursor-pointer`}
-          onClick={onToggleProfile}
+    <>
+      <header className="chat-header">
+        <button
+          className="icon-button chat-back"
+          aria-label="Voltar às conversas"
+          onClick={() => select(null)}
         >
-          <FiUser className="text-white" />
+          <FiArrowLeft />
+        </button>
+        <button className="chat-person" onClick={onProfile}>
+          <Avatar name={selected.username} src={selected.profileImgUrl} />
+          <span>
+            <b>{selected.username}</b>
+            <small>
+              {demo ? "Conversa de demonstração" : "Conversa direta"}
+            </small>
+          </span>
+        </button>
+        <div className="chat-header-actions">
+          <button
+            className={`icon-button ${searching ? "active" : ""}`}
+            aria-label="Buscar mensagens"
+            aria-expanded={searching}
+            onClick={onToggleSearch}
+          >
+            <FiSearch />
+          </button>
+          <span />
+          <button
+            className="icon-button"
+            aria-label="Ver perfil do contato"
+            onClick={onProfile}
+          >
+            <FiUser />
+          </button>
         </div>
-        <div className="relative">
+      </header>
+      {searching && (
+        <div className="message-search">
+          <FiSearch />
           <input
-            type="text"
-            placeholder="Search message"
-            value={searchValue}
-            onChange={e => onSearch(e.target.value)}
-            className="bg-transparent border border-blue-500 text-white text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            autoFocus
+            value={search}
+            onChange={(e) => onSearch(e.target.value)}
+            aria-label="Buscar nesta conversa"
+            placeholder="Buscar nesta conversa…"
           />
-          <FiSearch className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white text-sm pointer-events-none" />
+          <button
+            className="icon-button"
+            aria-label="Fechar busca"
+            onClick={onToggleSearch}
+          >
+            <FiX />
+          </button>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
-};
-
-export default ChatHeader;
+}

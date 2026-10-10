@@ -1,20 +1,47 @@
-import React from "react";
-import background from "../../assets/backgroundBlue.avif";
-
-type Props = {
-  className?: string;
-  children?: React.ReactNode;
-};
-
-const BackgroundBlue = ({ className = "", children }: Props) => {
+import { FiMessageCircle, FiZap, FiHeart } from "react-icons/fi";
+export default function BackgroundBlue() {
   return (
-    <div
-      className={`hidden 2xl:block 2xl:w-1/2 min-h-screen bg-cover bg-center ${className}`}
-      style={{ backgroundImage: `url(${background})` }}
-    >
-      {children}
-    </div>
+    <aside className="auth-art">
+      <div className="auth-art-orbit" />
+      <span className="pill pill-light">
+        <span className="tiny-dot" /> Menos distância. Mais conexão.
+      </span>
+      <h2>
+        Gente de verdade.
+        <br />
+        Conversas que
+        <br />
+        <em>fazem bem.</em>
+      </h2>
+      <div className="auth-bubbles">
+        <div className="art-bubble">
+          <span className="avatar avatar-2">AM</span>
+          <div>
+            <b>Ana Martins</b>
+            <p>Um café e uma boa conversa? ☕</p>
+          </div>
+          <small>agora</small>
+        </div>
+        <div className="art-bubble art-bubble-reply">
+          <p>Sempre! Vamos combinar 💜</p>
+          <span>✓✓</span>
+        </div>
+        <span className="art-typing">
+          <i />
+          <i />
+          <i />
+        </span>
+      </div>
+      <div className="auth-art-bottom">
+        <FiMessageCircle />
+        <p>
+          Um espaço para seus amigos,
+          <br />
+          suas ideias e seu próximo olá.
+        </p>
+        <FiHeart />
+        <FiZap />
+      </div>
+    </aside>
   );
-};
-
-export default BackgroundBlue;
+}

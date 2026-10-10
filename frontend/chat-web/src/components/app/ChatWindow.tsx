@@ -1,210 +1,286 @@
 import { useEffect, useRef, useState } from "react";
-import SockJS from "sockjs-client";
-import { Client } from "@stomp/stompjs";
-import axios from "axios";
+import {
+  FiArrowDown,
+  FiArrowUp,
+  FiArrowRight,
+  FiMessageCircle,
+  FiUsers,
+} from "react-icons/fi";
+import { useChat } from "../../context/ChatContext";
+import { errorMessage } from "../../utils/axiosConfig";
 import ChatHeader from "./ChatHeader";
-import UserProfilePanel from "./UserProfilePanel";
+import Message from "./Message";
 import MessageInput from "./MessageInput";
-import FriendsPanel from "./FriendsPanel";
-import { FiTrash2 } from "react-icons/fi";
-
-type MessageType = {
-  id: string;
-  text: string;
-  senderId: string;
-  senderUsername: string;
-  timestamp: string;
-};
-
-type ChatUser = {
-  id: string;
-  username: string;
-  description?: string;
-  profileImgUrl?: string;
-};
-
-type ChatWindowProps = {
-  showFriendsPanel: boolean;
-  onCloseFriendsPanel: () => void;
-  userId: string;
-  token: string;
-  selectedChat: ChatUser | null;
-};
-
-const Message = ({ id, text, isSender, timestamp, highlighted, onDelete }: { id: string; text: string; isSender: boolean; timestamp: string; highlighted?: boolean; onDelete?: (id: string) => void }) => (
-  <div className={`flex mb-2 ${isSender ? "justify-end" : "justify-start"} group` + (highlighted ? " bg-yellow-100/10" : "") }>
-    {isSender && (
-      <button
-        className="invisible group-hover:visible self-center mr-2 text-red-400 hover:text-red-200"
-        title="Excluir mensagem"
-        onClick={() => onDelete?.(id)}
-      >
-        <FiTrash2 size={16} />
-      </button>
-    )}
-    <div className={`max-w-xs px-4 py-2 rounded-lg break-words ${isSender ? "bg-green-500 text-white rounded-br-none" : "bg-gray-700 text-gray-100 rounded-bl-none"}` + (highlighted ? " border-2 border-yellow-400" : "") }>
-      <p className="text-sm">{text}</p>
-      <span className="block text-xs text-gray-300 mt-1 text-right">{timestamp}</span>
-    </div>
-  </div>
-);
-
-const ChatWindow = ({ showFriendsPanel, onCloseFriendsPanel, userId, token, selectedChat }: ChatWindowProps) => {
+import UserProfilePanel from "./UserProfilePanel";
+import Modal from "../ui/Modal";
+export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
+  const {
+    selected,
+    messages,
+    profile,
+    connection,
+    demo,
+    send,
+    removeMessage,
+    historyLoading,
+    historyError,
+  } = useChat();
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [searching, setSearching] = useState(false);
+  const [search, setSearch] = useState("");
+  const [index, setIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<MessageType[]>([]);
-  const [searchValue, setSearchValue] = useState("");
-  const [searchResults, setSearchResults] = useState<string[]>([]); 
-  const [searchIndex, setSearchIndex] = useState(0);
-  const messageRefs = useRef<{ [id: string]: HTMLDivElement | null }>({});
-  const clientRef = useRef<Client | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const end = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const nearBottom = useRef(true);
+  const results = search.trim()
+    ? messages
+        .filter((m) =>
+          m.content
+            .toLocaleLowerCase()
+            .includes(search.trim().toLocaleLowerCase()),
+        )
+        .map((m) => m.id)
+    : [];
+  const activeIndex = results.length ? index % results.length : 0;
   useEffect(() => {
-    if (!token) return;
-    const client = new Client({
-      webSocketFactory: () => new SockJS(`http://localhost:8080/ws?token=${token}`),
-      onConnect: () => {
-        client.subscribe("/user/queue/messages", (msg) => {
-          const body = JSON.parse(msg.body);
-          const newMsg: MessageType = { id: body.id, text: body.content, senderId: body.senderId, senderUsername: body.senderUsername, timestamp: body.sentAt };
-          setMessages(prev => [...prev, newMsg]);
-        });
-      },
-    });
-    client.activate();
-    clientRef.current = client;
-    return () => { if (client.active) client.deactivate(); };
-  }, [token]);
-
+    setSearch("");
+    setIndex(0);
+    setSearching(false);
+    setShowProfile(false);
+    nearBottom.current = true;
+  }, [selected?.id]);
   useEffect(() => {
-    if (!selectedChat) return;
-    const fetchHistory = async () => {
-      const res = await axios.get("/api/messages/history", { params: { userId, friendUsername: selectedChat.username }, headers: { Authorization: `Bearer ${token}` } });
-      const history: MessageType[] = res.data.map((msg: any) => ({ id: msg.id, text: msg.content, senderId: msg.senderId, senderUsername: msg.senderUsername, timestamp: msg.sentAt }));
-      setMessages(history.sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
-    };
-    fetchHistory();
-  }, [selectedChat, userId, token]);
-
-  useEffect(scrollToBottom, [messages]);
-
+    if (!search && nearBottom.current)
+      end.current?.scrollIntoView({ behavior: "instant" });
+  }, [messages, search]);
+  const activeId = results[activeIndex];
   useEffect(() => {
-    if (!searchValue) {
-      setSearchResults([]);
-      setSearchIndex(0);
-      return;
-    }
-    const filtered = messages
-      .filter(m => m.text.toLowerCase().includes(searchValue.toLowerCase()))
-      .map(m => m.id);
-    setSearchResults(filtered);
-    setSearchIndex(filtered.length > 0 ? 0 : -1);
-  }, [searchValue, messages]);
-
-  useEffect(() => {
-    if (searchResults.length > 0 && messageRefs.current[searchResults[searchIndex]]) {
-      messageRefs.current[searchResults[searchIndex]]?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [searchIndex, searchResults]);
-
-  const handleSend = () => {
-    if (!message.trim() || !selectedChat || !clientRef.current?.connected) return;
-    const tempMessage: MessageType = { id: crypto.randomUUID(), text: message, senderId: userId, senderUsername: "Você", timestamp: new Date().toISOString() };
-    setMessages(prev => [...prev, tempMessage]);
-    clientRef.current.publish({ destination: "/app/chat/send", body: JSON.stringify({ receiverUsername: selectedChat.username, content: message }) });
-    setMessage("");
-    scrollToBottom();
-  };
-
-  const requestDelete = (id: string) => {
-    setDeleteError(null);
-    setDeleteId(id);
-  };
-
-  const confirmDelete = async () => {
+    if (activeId)
+      messageRefs.current[activeId]?.scrollIntoView({
+        block: "center",
+        behavior: "smooth",
+      });
+  }, [activeId]);
+  const deleteMessage = async () => {
     if (!deleteId) return;
+    setBusy(true);
+    setError("");
     try {
-      setDeleting(true);
-      await axios.delete(`/api/messages/${deleteId}`, { headers: { Authorization: `Bearer ${token}` } });
-      setMessages(prev => prev.filter(m => m.id !== deleteId));
+      await removeMessage(deleteId);
       setDeleteId(null);
-    } catch (error) {
-      console.error("Erro ao excluir mensagem", error);
-      setDeleteError("Não foi possível excluir a mensagem.");
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
-      setDeleting(false);
+      setBusy(false);
     }
   };
-
-  const cancelDelete = () => {
-    if (deleting) return;
-    setDeleteId(null);
-  };
-
-  const goToNextResult = () => setSearchIndex(i => (searchResults.length ? (i + 1) % searchResults.length : 0));
-  const goToPrevResult = () => setSearchIndex(i => (searchResults.length ? (i - 1 + searchResults.length) % searchResults.length : 0));
-
-  return (
-    <div className="flex-1 relative bg-[#1C2C3C] flex flex-col">
-      <div className="absolute top-0 left-0 right-0 z-10">
-        <ChatHeader
-          onToggleProfile={() => setShowProfile(prev => !prev)}
-          isProfileOpen={showProfile}
-          selectedUser={selectedChat}
-          onSearch={setSearchValue}
-          searchValue={searchValue}
-        />
-        {searchValue && (
-          <div className="absolute right-8 top-16 flex items-center gap-2 z-20">
-            <span className="text-xs text-white">{searchResults.length > 0 ? `${searchIndex + 1} of ${searchResults.length}` : "No message found"}</span>
-            <button className="px-2 py-1 bg-blue-700 text-white rounded" onClick={goToPrevResult} disabled={searchResults.length === 0}>↑</button>
-            <button className="px-2 py-1 bg-blue-700 text-white rounded" onClick={goToNextResult} disabled={searchResults.length === 0}>↓</button>
-          </div>
-        )}
-      </div>
-      {showFriendsPanel && <div className="absolute inset-0 z-20 bg-[#1C2C3C] px-4 pt-14 pb-16"><FriendsPanel userId={userId} onClose={onCloseFriendsPanel} /></div>}
-      <div className="flex flex-1 pt-14 pb-16 overflow-hidden">
-        <div className="flex-1 px-4 overflow-y-auto flex flex-col scrollbar-hide" style={{ marginRight: showProfile ? "384px" : 0 }}>
-          {messages.map(({ id, text, senderId, timestamp }) => (
-            <div ref={el => { messageRefs.current[id] = el; }} key={id}>
-              <Message
-                id={id}
-                text={text}
-                isSender={senderId === userId}
-                timestamp={new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                highlighted={!!searchValue && searchResults[searchIndex] === id}
-                onDelete={requestDelete}
-              />
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
+  if (!selected)
+    return (
+      <section className="chat-window chat-welcome">
+        <div className="welcome-graphic">
+          <FiMessageCircle />
+          <span>✦</span>
+          <i>olá!</i>
         </div>
-        {showProfile && selectedChat && <UserProfilePanel visible={true} onClose={() => setShowProfile(false)} selectedUser={selectedChat} />}
-      </div>
-      {deleteId && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-[#1e293b] border border-gray-700 p-5 shadow-xl">
-            <h3 className="text-lg font-semibold text-white">Excluir mensagem</h3>
-            <p className="mt-2 text-sm text-gray-300">Tem certeza que deseja excluir esta mensagem? Esta ação não pode ser desfeita.</p>
-            {deleteError && <p className="mt-2 text-sm text-red-400">{deleteError}</p>}
-            <div className="mt-4 flex justify-end gap-2">
-              <button disabled={deleting} onClick={cancelDelete} className="px-3 py-2 rounded bg-gray-600 text-white hover:bg-gray-500 disabled:opacity-60">Cancelar</button>
-              <button disabled={deleting} onClick={confirmDelete} className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-500 disabled:opacity-60">{deleting ? "Excluindo..." : "Excluir"}</button>
-            </div>
-          </div>
+        <span className="eyebrow">SEU ESPAÇO DE CONEXÃO</span>
+        <h2>
+          Uma boa conversa
+          <br />
+          pode começar agora.
+        </h2>
+        <p>
+          Escolha uma conversa ao lado ou convide
+          <br />
+          um amigo para colocar o papo em dia.
+        </p>
+        <button className="button button-primary" onClick={onFriends}>
+          <FiUsers /> Encontrar meus amigos <FiArrowRight />
+        </button>
+        <span className="welcome-note">Perto, mesmo de longe.</span>
+      </section>
+    );
+  const draft = drafts[selected.id] || "";
+  const submit = () => {
+    if (send(draft)) {
+      setDrafts((prev) => ({ ...prev, [selected.id]: "" }));
+      nearBottom.current = true;
+    }
+  };
+  return (
+    <section className="chat-window">
+      <ChatHeader
+        onProfile={() => setShowProfile((v) => !v)}
+        searching={searching}
+        onToggleSearch={() => {
+          setSearching((v) => !v);
+          setSearch("");
+          setIndex(0);
+        }}
+        search={search}
+        onSearch={(value) => {
+          setSearch(value);
+          setIndex(0);
+        }}
+      />
+      {searching && search && (
+        <div className="search-results" role="status">
+          <span>
+            {results.length
+              ? `${activeIndex + 1} de ${results.length} mensagens`
+              : "Nenhuma mensagem encontrada"}
+          </span>
+          <button
+            className="icon-button"
+            aria-label="Resultado anterior"
+            disabled={!results.length}
+            onClick={() =>
+              setIndex((i) => (i - 1 + results.length) % results.length)
+            }
+          >
+            <FiArrowUp />
+          </button>
+          <button
+            className="icon-button"
+            aria-label="Próximo resultado"
+            disabled={!results.length}
+            onClick={() => setIndex((i) => i + 1)}
+          >
+            <FiArrowDown />
+          </button>
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-[#1C2C3C] border-t border-gray-700">
-        <MessageInput value={message} onChange={setMessage} onSend={handleSend} placeholder="Mensagem" />
+      {connection !== "connected" && (
+        <div className="connection-banner" role="status">
+          Reconectando ao chat. Seu rascunho está preservado.
+        </div>
+      )}
+      {historyError && (
+        <p className="feedback feedback-error" role="alert">
+          {historyError}
+        </p>
+      )}
+      <div
+        className="message-scroll"
+        ref={scrollRef}
+        onScroll={() => {
+          const node = scrollRef.current;
+          if (node)
+            nearBottom.current =
+              node.scrollHeight - node.scrollTop - node.clientHeight < 120;
+        }}
+      >
+        <div className="conversation-intro">
+          <span>O COMEÇO DE UMA BOA CONVERSA</span>
+          <p>Você e {selected.username}. Um espaço para trocar ideias.</p>
+        </div>
+        {historyLoading ? (
+          <div className="history-loading" role="status">
+            <span className="spinner" /> Carregando conversa…
+          </div>
+        ) : (
+          !messages.length && (
+            <div className="conversation-empty">
+              <FiMessageCircle />
+              <p>
+                A primeira mensagem pode ser sua.
+                <br />
+                Que tal um olá? 👋
+              </p>
+            </div>
+          )
+        )}
+        {messages.map((message, i) => {
+          const day = new Date(message.sentAt).toLocaleDateString("pt-BR", {
+            day: "numeric",
+            month: "long",
+          });
+          const previousDay = i
+            ? new Date(messages[i - 1].sentAt).toLocaleDateString("pt-BR", {
+                day: "numeric",
+                month: "long",
+              })
+            : "";
+          return (
+            <div
+              key={message.id}
+              ref={(element) => {
+                messageRefs.current[message.id] = element;
+              }}
+            >
+              {day !== previousDay && (
+                <div className="day-divider">
+                  {new Date(message.sentAt).toDateString() ===
+                  new Date().toDateString()
+                    ? "Hoje"
+                    : day}
+                </div>
+              )}
+              <Message
+                message={message}
+                isSender={message.senderId === profile.id}
+                highlighted={activeId === message.id}
+                onDelete={() => {
+                  setError("");
+                  setDeleteId(message.id);
+                }}
+              />
+            </div>
+          );
+        })}
+        <div ref={end} />
       </div>
-    </div>
+      {demo && (
+        <div className="demo-chat-note">
+          Esta é uma demonstração. As mensagens ficam apenas neste navegador.
+        </div>
+      )}
+      <MessageInput
+        value={draft}
+        onChange={(value) =>
+          setDrafts((prev) => ({ ...prev, [selected.id]: value }))
+        }
+        onSend={submit}
+        disabled={connection !== "connected"}
+      />
+      {showProfile && (
+        <UserProfilePanel onClose={() => setShowProfile(false)} />
+      )}
+      {deleteId && (
+        <Modal
+          title="Excluir esta mensagem?"
+          onClose={() => {
+            if (!busy) setDeleteId(null);
+          }}
+        >
+          <p className="muted">A mensagem será excluída permanentemente.</p>
+          {error && (
+            <p className="feedback feedback-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="modal-actions">
+            <button
+              className="button button-secondary"
+              disabled={busy}
+              onClick={() => setDeleteId(null)}
+            >
+              Cancelar
+            </button>
+            <button
+              className="button button-danger"
+              disabled={busy}
+              onClick={() => void deleteMessage()}
+            >
+              {busy ? "Excluindo…" : "Excluir mensagem"}
+            </button>
+          </div>
+        </Modal>
+      )}
+    </section>
   );
-};
-
-export default ChatWindow;
+}

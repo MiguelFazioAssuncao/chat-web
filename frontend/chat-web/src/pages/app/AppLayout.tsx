@@ -1,42 +1,33 @@
 import { useState } from "react";
+import { ChatProvider, useChat } from "../../context/ChatContext";
 import Header from "../../components/app/Header";
-import Sidebar from "../../components/app/SideBar";
+import SideBar from "../../components/app/SideBar";
 import ChatWindow from "../../components/app/ChatWindow";
-import { extractUserIdFromToken } from "../../utils/jwt";
-
-type ChatUser = {
-  id: string;
-  username: string;
-  description?: string;
-  profileImgUrl?: string;
-};
-
-const AppLayout = () => {
-  const [friendsPanelVisible, setFriendsPanelVisible] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<ChatUser | null>(null);
-
-  const token =
-    localStorage.getItem("token") || sessionStorage.getItem("token") || "";
-  const userId = token ? extractUserIdFromToken(token) ?? "" : "";
-
+import FriendsPanel from "../../components/app/FriendsPanel";
+import ProfilePanel from "../../components/app/ProfilePanel";
+function Workspace() {
+  const [friends, setFriends] = useState(false);
+  const [profile, setProfile] = useState(false);
+  const { selected } = useChat();
   return (
-    <div className="h-screen flex flex-col bg-gray-900 text-white">
+    <div className={`workspace ${selected ? "has-selected-chat" : ""}`}>
       <Header />
-      <main className="flex flex-1 overflow-hidden">
-        <Sidebar
-          onToggleFriendsPanel={() => setFriendsPanelVisible((prev) => !prev)}
-          onSelectChat={setSelectedChat}
+      <div className="workspace-body">
+        <SideBar
+          onFriends={() => setFriends(true)}
+          onProfile={() => setProfile(true)}
         />
-        <ChatWindow
-          showFriendsPanel={friendsPanelVisible}
-          onCloseFriendsPanel={() => setFriendsPanelVisible(false)}
-          userId={userId}
-          token={token}
-          selectedChat={selectedChat}
-        />
-      </main>
+        <ChatWindow onFriends={() => setFriends(true)} />
+      </div>
+      {friends && <FriendsPanel onClose={() => setFriends(false)} />}
+      {profile && <ProfilePanel onClose={() => setProfile(false)} />}
     </div>
   );
-};
-
-export default AppLayout;
+}
+export default function AppLayout({ demo = false }: { demo?: boolean }) {
+  return (
+    <ChatProvider demo={demo}>
+      <Workspace />
+    </ChatProvider>
+  );
+}

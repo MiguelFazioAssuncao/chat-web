@@ -28,6 +28,9 @@ public class AuthService {
     @Value("${app.jwt.reset-secret}")
     private String resetSecret;
 
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailService emailService;
@@ -72,7 +75,7 @@ public class AuthService {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
-        String resetLink = "http://localhost:5173/auth/reset-password?token=" + token;
+        String resetLink = frontendUrl.replaceAll("/+$", "") + "/auth/reset-password?token=" + token;
 
         emailService.send(
                 user.getEmail(),

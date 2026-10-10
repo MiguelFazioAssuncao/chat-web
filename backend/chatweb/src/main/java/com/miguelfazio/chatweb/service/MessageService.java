@@ -26,6 +26,9 @@ public class MessageService {
     }
 
     public Message saveMessage(MessageRequestDTO dto, String senderUsername) {
+        if (dto.content() == null || dto.content().isBlank() || dto.content().length() > 4000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message must contain 1 to 4000 characters");
+        }
         User sender = userRepository.findByUsername(senderUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found"));
 

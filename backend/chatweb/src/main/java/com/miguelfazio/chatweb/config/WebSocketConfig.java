@@ -16,6 +16,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${app.jwt.reset-secret}")
     private String jwtSecret;
 
+    @Value("${app.allowed-origins}")
+    private String[] allowedOrigins;
+
     private final UserRepository userRepository;
 
     public WebSocketConfig(UserRepository userRepository) {
@@ -26,7 +29,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .setHandshakeHandler(new CustomHandshakeHandler(jwtSecret, userRepository))
-                .setAllowedOriginPatterns("*")
+                .setAllowedOrigins(allowedOrigins)
                 .withSockJS();
     }
 

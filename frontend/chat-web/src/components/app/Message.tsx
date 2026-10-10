@@ -1,32 +1,53 @@
-type MessageProps = {
-  text: string;
-  isSender: boolean; // true = mensagem enviada pelo usuário atual
-  timestamp?: string; // opcional, horário da mensagem
-};
-
-const Message = ({ text, isSender, timestamp }: MessageProps) => {
+import { FiCheck, FiClock, FiTrash2, FiAlertCircle } from "react-icons/fi";
+import type { ChatMessage } from "../../types/chat";
+export default function Message({
+  message,
+  isSender,
+  highlighted,
+  onDelete,
+}: {
+  message: ChatMessage;
+  isSender: boolean;
+  highlighted?: boolean;
+  onDelete: () => void;
+}) {
   return (
     <div
-      className={`flex mb-2 ${
-        isSender ? "justify-end" : "justify-start"
-      }`}
+      className={`message-row ${isSender ? "outgoing" : "incoming"} ${highlighted ? "highlighted" : ""}`}
     >
-      <div
-        className={`max-w-xs px-4 py-2 rounded-lg break-words ${
-          isSender
-            ? "bg-green-500 text-white rounded-br-none"
-            : "bg-gray-700 text-gray-100 rounded-bl-none"
-        }`}
-      >
-        <p className="text-sm">{text}</p>
-        {timestamp && (
-          <span className="block text-xs text-gray-300 mt-1 text-right">
-            {timestamp}
-          </span>
+      {isSender && !message.pending && (
+        <button
+          className="message-delete icon-button"
+          aria-label="Excluir mensagem"
+          onClick={onDelete}
+        >
+          <FiTrash2 />
+        </button>
+      )}
+      <div className="message-bubble">
+        <p>{message.content}</p>
+        <span className="message-meta">
+          <time dateTime={message.sentAt}>
+            {new Date(message.sentAt).toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </time>
+          {isSender &&
+            (message.pending ? (
+              <FiClock aria-label="Enviando" />
+            ) : message.failed ? (
+              <FiAlertCircle aria-label="Envio não confirmado" />
+            ) : (
+              <FiCheck aria-label="Enviada" />
+            ))}
+        </span>
+        {message.failed && (
+          <small className="message-failed">
+            Envio não confirmado. Reabra a conversa para conferir.
+          </small>
         )}
       </div>
     </div>
   );
-};
-
-export default Message;
+}

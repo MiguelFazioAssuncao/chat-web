@@ -1,22 +1,22 @@
-
-
+import { jwtDecode } from "jwt-decode";
 export type JwtPayload = {
   sub: string;
   username?: string;
   exp?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 };
-
 export function extractUserIdFromToken(token: string): string | null {
-  if (!token) return null;
-
   try {
-    const decoded = jwtDecode<JwtPayload>(token);
-    return decoded.sub ?? null;
-  } catch (error) {
-    console.error("Erro ao decodificar JWT:", error);
+    return jwtDecode<JwtPayload>(token).sub || null;
+  } catch {
     return null;
   }
 }
-
-import { jwtDecode } from "jwt-decode";
+export function isValidToken(token: string): boolean {
+  try {
+    const value = jwtDecode<JwtPayload>(token);
+    return Boolean(value.sub && value.exp && value.exp * 1000 > Date.now());
+  } catch {
+    return false;
+  }
+}

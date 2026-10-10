@@ -38,18 +38,24 @@ public class ChatController {
 
         Message savedMessage = messageService.saveMessage(messageRequestDTO, principal.getName());
 
-        messagingTemplate.convertAndSendToUser(
+        MessageDTO message = new MessageDTO(
+                savedMessage.getId(),
+                savedMessage.getSender().getId(),
+                savedMessage.getSender().getUsername(),
                 savedMessage.getReceiver().getUsername(),
-                "/queue/messages",
-                new MessageDTO(
-                        savedMessage.getId(),
-                        savedMessage.getSender().getId(),
-                        savedMessage.getSender().getUsername(),
-                        savedMessage.getReceiver().getUsername(),
-                        savedMessage.getContent(),
-                        savedMessage.getSentAt()
-                )
+                savedMessage.getContent(),
+                savedMessage.getSentAt(),
+                messageRequestDTO.clientMessageId()
         );
+
+        messagingTemplate.convertAndSendToUser(
+                savedMessage.getReceiver().getUsername(), "/queue/messages", message);
+        // Confirm persistence with the database ID so the sender can delete the
+        // message immediately and reconcile its optimistic local copy.
+        if (!savedMessage.getSender().getId().equals(savedMessage.getReceiver().getId())) {
+            messagingTemplate.convertAndSendToUser(
+                    savedMessage.getSender().getUsername(), "/queue/messages", message);
+        }
     }
 
     @GetMapping("/messages/history")

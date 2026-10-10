@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: chatweb-api
+    runtime: docker
+    plan: free
+    region: virginia
+    rootDir: backend/chatweb
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: DB_HOST
+        fromDatabase:
+          name: chatweb-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: chatweb-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: chatweb-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: chatweb-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: chatweb-db
+          property: password
+
+databases:
+  - name: chatweb-db
+    plan: free
+    region: virginia
+    databaseName: chatweb
+    user: chatweb
+    ipAllowList: []
