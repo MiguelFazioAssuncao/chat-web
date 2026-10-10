@@ -7,6 +7,9 @@ services:
     rootDir: backend/chatweb
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
+    buildFilter:
+      paths:
+        - backend/chatweb/**
     envVars:
       - key: JWT_SECRET
         generateValue: true
