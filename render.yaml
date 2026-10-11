@@ -17,6 +17,8 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
+      - key: ALLOWED_ORIGIN_PATTERNS
+        value: https://chat-*-miguel-fazio-de-assuncaos-projects.vercel.app,http://localhost:5173,http://127.0.0.1:5173
       - key: DB_HOST
         fromDatabase:
           name: chatweb-db

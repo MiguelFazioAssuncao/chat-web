@@ -4,7 +4,7 @@
 
 Importe o repositório como Blueprint usando `render.yaml`. Docker utiliza Java 21; health check: `/health`. O Blueprint cria API e PostgreSQL gratuitos e gera o segredo JWT.
 
-Defina `FRONTEND_URL` e `ALLOWED_ORIGINS` com a URL HTTPS definitiva da Vercel, sem barra final. Múltiplas origens: separadas por vírgula. Configure `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD` e `MAIL_PORT` (padrão 587). O Render gratuito restringe portas SMTP: recuperação de senha depende de um provedor acessível no plano escolhido.
+Defina `FRONTEND_URL` e `ALLOWED_ORIGINS` com a URL HTTPS definitiva da Vercel, sem barra final. `ALLOWED_ORIGIN_PATTERNS` cobre localhost, loopback e as URLs de preview da Vercel para este projeto. Múltiplos valores: separados por vírgula. Configure `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD` e `MAIL_PORT` (padrão 587). O Render gratuito restringe portas SMTP: recuperação de senha depende de um provedor acessível no plano escolhido.
 
 O PostgreSQL gratuito expira em 30 dias. O serviço gratuito suspende por inatividade. Avatares ficam em arquivos locais e podem desaparecer após reinício/deploy. Para operação permanente, use banco e armazenamento persistentes. Contas e mensagens ficam no PostgreSQL.
 

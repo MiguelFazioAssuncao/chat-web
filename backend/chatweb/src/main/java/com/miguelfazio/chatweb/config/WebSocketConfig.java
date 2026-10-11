@@ -9,6 +9,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
@@ -18,6 +21,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Value("${app.allowed-origins}")
     private String[] allowedOrigins;
+
+    @Value("${app.allowed-origin-patterns}")
+    private String[] allowedOriginPatterns;
 
     private final UserRepository userRepository;
 
@@ -29,7 +35,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .setHandshakeHandler(new CustomHandshakeHandler(jwtSecret, userRepository))
-                .setAllowedOrigins(allowedOrigins)
+                .setAllowedOriginPatterns(Stream.concat(
+                        List.of(allowedOrigins).stream(),
+                        List.of(allowedOriginPatterns).stream()
+                ).toArray(String[]::new))
                 .withSockJS();
     }
 
