@@ -1,37 +1,37 @@
 # ChatWeb
 
-Interface em React 19, TypeScript e Vite. Página inicial, autenticação, recuperação de senha e chat com mensagens em tempo real, perfis e convites de amizade.
+Interface built with React 19, TypeScript, and Vite. Includes a landing page, authentication, password recovery, and chat with real-time messaging, profiles, and friend requests.
 
-## Executar
+## Run
 
-Requer Node.js 20.19+ ou 22.12+.
+Requires Node.js 20.19+ or 22.12+.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Abra `http://localhost:5173`. O backend Spring Boot deve rodar em `http://localhost:8080` para autenticação e conversas reais. O Vite encaminha `/auth`, `/api`, `/ws` e `/uploads` ao backend.
+Open `http://localhost:5173`. The Spring Boot backend must run at `http://localhost:8080` for authentication and live conversations. Vite forwards `/auth`, `/api`, `/ws`, and `/uploads` to the backend.
 
-A rota `/demo` funciona sem backend. Seus contatos e mensagens são ilustrativos, e as alterações ficam no armazenamento local do navegador. Convites de demonstração não enviam e-mails nem criam amizades reais.
+The `/demo` route works without a backend. Its contacts and messages are illustrative, and changes stay in the browser's local storage. Demo invitations do not send emails or create real friendships.
 
-## Rotas
+## Routes
 
-- `/`: apresentação do produto.
-- `/auth/login`, `/auth/register`: acesso e cadastro.
-- `/auth/forgot-password`, `/auth/reset-password?token=…`: recuperação.
-- `/app`: chat autenticado.
-- `/demo`: demonstração interativa.
+- `/`: product introduction.
+- `/auth/login`, `/auth/register`: login and registration.
+- `/auth/forgot-password`, `/auth/reset-password?token=…`: password recovery.
+- `/app`: authenticated chat.
+- `/demo`: interactive demo.
 
-## Experiência
+## Experience
 
-Temas claro e escuro, navegação adaptada a celular, busca de contatos e mensagens, filtro de não lidas, rascunhos por conversa durante a sessão, seletor de emojis e mensagens com quebra de linha. Use Enter para enviar e Shift + Enter para inserir uma nova linha. Os diálogos usam o elemento nativo `dialog`, com foco contido e fechamento por Escape.
+Light and dark themes, mobile navigation, contact and message search, an unread filter, per-conversation drafts during the session, an emoji picker, and multiline messages. Use Enter to send and Shift + Enter to insert a new line. Dialogs use the native `dialog` element, with focus trapping and Escape to close.
 
-Uma conexão STOMP compartilha as atualizações entre lista e conversa. O backend confirma os envios com o ID persistido e o `clientMessageId`, evitando duplicação quando mensagens idênticas são enviadas em sequência. O frontend preserva atualizações recebidas durante o carregamento do histórico. Atualize frontend e backend juntos.
+A single STOMP connection shares updates between the conversation list and the active conversation. The backend acknowledges sends with the persisted ID and `clientMessageId`, preventing duplication when identical messages are sent in sequence. The frontend preserves updates received while message history is loading. Update the frontend and backend together.
 
-## Configuração e produção
+## Configuration and production
 
-Use `.env.example` como referência. Sem `VITE_API_URL`, as requisições usam a mesma origem. Para um backend separado, informe sua origem em `VITE_API_URL` e configure CORS no Spring Boot. Essa variável é pública: não inclua segredos.
+Use `.env.example` as a reference. Without `VITE_API_URL`, requests use the same origin. For a separate backend, set its origin in `VITE_API_URL` and configure CORS in Spring Boot. This variable is public: do not include secrets.
 
 ```sh
 npm test
@@ -39,17 +39,17 @@ npm run build
 npm run preview
 ```
 
-Sirva `dist/` com fallback de rotas para `index.html`. Em uma implantação de mesma origem, o servidor deve encaminhar `/auth`, `/api`, `/ws` e `/uploads` ao Spring Boot, incluindo o transporte WebSocket. A configuração de proxy do Vite vale somente durante desenvolvimento.
+Serve `dist/` with a route fallback to `index.html`. In a same-origin deployment, the server must forward `/auth`, `/api`, `/ws`, and `/uploads` to Spring Boot, including WebSocket transport. The Vite proxy configuration applies only during development.
 
-## Verificação
+## Verification
 
-Os testes em `tests/messageUtils.test.mjs` validam a reconciliação de envios idênticos, redelivery, confirmação após histórico, preservação de mensagens durante requisições e remoção de mensagens antigas excluídas. Executam com o test runner do Node e o TypeScript já presente no projeto.
+The tests in `tests/messageUtils.test.mjs` validate reconciliation of identical sends, redelivery, acknowledgments after history loads, preservation of messages during requests, and removal of older deleted messages. They run with the Node test runner and the TypeScript dependency already included in the project.
 
-Os testes unitários do backend podem ser executados, sem PostgreSQL, com:
+Backend unit tests can run without PostgreSQL:
 
 ```sh
 cd ../../backend/chatweb
 bash ./mvnw -Dtest=ChatControllerTest,MessageServiceTest,UserServiceTest test
 ```
 
-O teste `ChatwebApplicationTests` original carrega o contexto completo e depende da configuração de banco e dos serviços.
+The original `ChatwebApplicationTests` test loads the full application context and depends on the database and service configuration.

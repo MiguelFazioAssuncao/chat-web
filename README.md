@@ -19,7 +19,7 @@ chatweb/
 - **Monorepo:** Organized structure to support integrated development
 
 ## Overview Video
-[Watch the project overview video](https://www.youtube.com/watch?v=SEU_VIDEO_AQUI)
+[Watch the project overview video](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
 
 ## Documentation
 - [Backend README](./backend/README.md)
