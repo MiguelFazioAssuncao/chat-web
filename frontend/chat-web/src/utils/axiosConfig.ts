@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
-export const api = axios.create({ baseURL: apiBase, timeout: 15000 });
+export const api = axios.create({ baseURL: apiBase, timeout: 60000 });
 api.interceptors.request.use((config) => {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -27,18 +27,37 @@ export function errorMessage(error: unknown): string {
   if (!error.response)
     return "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.";
   const data = error.response.data;
-  const message =
+  const rawMessage =
     typeof data === "string" ? data : data?.message || data?.error;
+  const message =
+    typeof rawMessage === "string"
+      ? rawMessage.replace(/^Error:\s*/i, "")
+      : undefined;
   const translations: Record<string, string> = {
     "User not found": "Usuário não encontrado.",
     "Invalid email or password": "E-mail ou senha incorretos.",
     "Email not found": "E-mail não encontrado.",
+    "Recipient not found": "Nenhuma conta encontrada com este e-mail.",
+    "Sender not found": "Sua sessão expirou. Entre novamente.",
+    "You cannot invite yourself": "Você não pode enviar um convite para si mesmo.",
+    "You are already friends": "Vocês já estão conectados.",
+    "Friend request already sent and pending":
+      "Já existe um convite pendente para esta pessoa.",
+    "This user has already sent you a friend request":
+      "Esta pessoa já enviou um convite para você. Confira seus convites recebidos.",
     "Invalid or expired token":
       "O link expirou. Solicite uma nova recuperação.",
     "Username must be between 3 and 20 characters":
       "O nome deve ter entre 3 e 20 caracteres.",
+    "Username already in use": "Este nome de usuário já está em uso.",
     "Description must be at most 250 characters":
       "A descrição deve ter até 250 caracteres.",
+    "Current password is required": "Informe sua senha atual.",
+    "Current password is incorrect": "A senha atual está incorreta.",
+    "Password must be between 6 and 60 characters":
+      "A senha deve ter entre 6 e 60 caracteres.",
+    "Message must contain 1 to 1000 characters":
+      "A mensagem deve ter entre 1 e 1000 caracteres.",
     "Avatar must contain at most 5 MB": "Escolha uma imagem de até 5 MB.",
     "Avatar must be PNG, JPG or WebP": "Escolha uma imagem PNG, JPG ou WebP.",
   };

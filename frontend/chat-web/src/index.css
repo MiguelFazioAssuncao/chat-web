@@ -1589,6 +1589,25 @@ input[type="checkbox"] {
   color: var(--muted);
   font-size: 19px;
   transition: 0.15s;
+  position: relative;
+}
+.rail-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  font-style: normal;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface-soft);
 }
 .rail-button:hover {
   background: var(--lavender);
@@ -2039,23 +2058,63 @@ input[type="checkbox"] {
 :root[data-theme="dark"] .message-row.outgoing .message-meta {
   color: #352057;
 }
+.message-actions {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.message-action,
 .message-delete {
   opacity: 0;
   width: 28px;
   height: 28px;
   color: var(--muted);
 }
+.message-action > svg,
 .message-delete > svg {
   width: 13px;
   height: 13px;
 }
+.message-row:hover .message-action,
 .message-row:hover .message-delete,
+.message-action:focus-visible,
 .message-delete:focus-visible {
   opacity: 1;
 }
 .message-delete:hover {
   background: #b7445412;
   color: var(--danger);
+}
+.message-edited {
+  font-style: italic;
+  opacity: 0.85;
+}
+.message-meta > .read-check {
+  width: 15px;
+  height: 15px;
+}
+.typing-text {
+  color: var(--purple) !important;
+  font-weight: 550;
+}
+.composer-editing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--lavender-text);
+  background: var(--lavender);
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.composer-editing > span {
+  flex: 1;
+  font-weight: 550;
+}
+.composer-editing > .icon-button {
+  width: 24px;
+  height: 24px;
 }
 .highlighted .message-bubble {
   outline: 3px solid #d9b769;
@@ -2404,6 +2463,20 @@ input[type="checkbox"] {
   font-size: 9px;
   color: var(--muted);
   margin-top: 14px;
+}
+.requests-tabs {
+  margin-top: 26px;
+}
+.profile-password-section {
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 20px;
+}
+.profile-password-section > h3 {
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  color: var(--muted);
+  margin-bottom: 14px;
 }
 .profile-logout {
   display: flex;

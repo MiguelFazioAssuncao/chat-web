@@ -1,17 +1,20 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiCamera, FiLogOut, FiCheck } from "react-icons/fi";
+import { FiCamera, FiLogOut, FiCheck, FiLock } from "react-icons/fi";
 import { useChat } from "../../context/ChatContext";
 import { useAuth } from "../../context/AuthContext";
 import { errorMessage } from "../../utils/axiosConfig";
 import Modal from "../ui/Modal";
 import Avatar from "../ui/Avatar";
 export default function ProfilePanel({ onClose }: { onClose: () => void }) {
-  const { profile, updateProfile, uploadAvatar, demo } = useChat();
+  const { profile, updateProfile, changePassword, uploadAvatar, demo } =
+    useChat();
   const { logout } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const [username, setUsername] = useState(profile.username);
   const [description, setDescription] = useState(profile.description || "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -23,6 +26,26 @@ export default function ProfilePanel({ onClose }: { onClose: () => void }) {
     try {
       await updateProfile(username.trim(), description.trim());
       setSuccess("Perfil atualizado. Ficou com a sua cara!");
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const savePassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    try {
+      await changePassword(currentPassword, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setSuccess(
+        demo
+          ? "Demonstração: a senha não é alterada neste modo."
+          : "Sua senha foi atualizada com sucesso.",
+      );
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -118,6 +141,49 @@ export default function ProfilePanel({ onClose }: { onClose: () => void }) {
           )}
         </button>
       </form>
+      {!demo && (
+        <form onSubmit={savePassword} className="profile-password-section">
+          <h3>SEGURANÇA · ALTERAR SENHA</h3>
+          <div className="field">
+            <label htmlFor="current-password">Senha atual</label>
+            <div className="input-wrap">
+              <FiLock />
+              <input
+                id="current-password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Sua senha atual"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div className="field">
+            <label htmlFor="new-password">Nova senha</label>
+            <div className="input-wrap">
+              <FiLock />
+              <input
+                id="new-password"
+                type="password"
+                autoComplete="new-password"
+                placeholder="Pelo menos 6 caracteres"
+                minLength={6}
+                maxLength={60}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <button
+            className="button button-secondary button-full"
+            disabled={busy || !currentPassword || newPassword.length < 6}
+          >
+            Atualizar senha
+          </button>
+        </form>
+      )}
       {demo ? (
         <Link className="profile-logout" to="/auth/register">
           Criar uma conta de verdade →

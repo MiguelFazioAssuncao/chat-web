@@ -6,6 +6,7 @@ export type ChatUser = {
   lastMessage?: string;
   unread?: number;
   lastMessageAt?: string;
+  online?: boolean;
 };
 export type Profile = {
   id: string;
@@ -21,6 +22,8 @@ export type ChatMessage = {
   receiverUsername: string;
   sentAt: string;
   clientMessageId?: string;
+  editedAt?: string;
+  readAt?: string;
   pending?: boolean;
   failed?: boolean;
 };
@@ -30,4 +33,9 @@ export type FriendRequest = {
   senderEmail: string;
   senderProfileImgUrl?: string;
   senderDescription?: string;
+  receiverUsername?: string;
+  receiverEmail?: string;
+  receiverProfileImgUrl?: string;
+  receiverDescription?: string;
+  createdAt?: string;
 };

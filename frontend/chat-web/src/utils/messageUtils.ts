@@ -41,3 +41,37 @@ export function mergeHistory(
     ),
   ].sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
 }
+
+export function applyEditedMessage(
+  history: ChatMessage[],
+  updated: ChatMessage,
+): ChatMessage[] {
+  return history.map((message) =>
+    message.id === updated.id
+      ? {
+          ...message,
+          content: updated.content,
+          editedAt: updated.editedAt || new Date().toISOString(),
+        }
+      : message,
+  );
+}
+
+export function applyDeletedMessage(
+  history: ChatMessage[],
+  messageId: string,
+): ChatMessage[] {
+  return history.filter((message) => message.id !== messageId);
+}
+
+export function applyReadReceipt(
+  history: ChatMessage[],
+  senderId: string,
+  readAt: string,
+): ChatMessage[] {
+  return history.map((message) =>
+    message.senderId === senderId && !message.readAt
+      ? { ...message, readAt }
+      : message,
+  );
+}

@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { FiSmile, FiSend, FiX } from "react-icons/fi";
+import { FiSmile, FiSend, FiX, FiEdit2, FiCheck } from "react-icons/fi";
+import type { ChatMessage } from "../../types/chat";
 export default function MessageInput({
   value,
   onChange,
   onSend,
+  onTyping,
+  editingMessage,
+  onCancelEdit,
+  onEditLast,
   disabled,
 }: {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
+  onTyping?: () => void;
+  editingMessage?: ChatMessage | null;
+  onCancelEdit?: () => void;
+  onEditLast?: () => void;
   disabled: boolean;
 }) {
   const [emoji, setEmoji] = useState(false);
@@ -21,6 +30,11 @@ export default function MessageInput({
     }
   }, [value]);
   useEffect(() => {
+    if (editingMessage) {
+      ref.current?.focus();
+    }
+  }, [editingMessage]);
+  useEffect(() => {
     if (!emoji) return;
     const close = (event: MouseEvent) => {
       if (!emojiRef.current?.contains(event.target as Node)) setEmoji(false);
@@ -30,6 +44,20 @@ export default function MessageInput({
   }, [emoji]);
   return (
     <footer className="composer-footer">
+      {editingMessage && (
+        <div className="composer-editing" role="status">
+          <FiEdit2 />
+          <span>Editando mensagem</span>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Cancelar edição"
+            onClick={onCancelEdit}
+          >
+            <FiX />
+          </button>
+        </div>
+      )}
       <div className="composer">
         <div className="emoji-wrap" ref={emojiRef}>
           <button
@@ -65,7 +93,7 @@ export default function MessageInput({
                   key={item}
                   aria-label={`Inserir ${item}`}
                   onClick={() => {
-                    onChange(value + item);
+                    onChange((value + item).slice(0, 1000));
                     ref.current?.focus();
                     setEmoji(false);
                   }}
@@ -81,12 +109,36 @@ export default function MessageInput({
           aria-label="Mensagem"
           rows={1}
           value={value}
-          maxLength={4000}
+          maxLength={1000}
           placeholder={
-            disabled ? "Aguardando conexão…" : "Escreva sua mensagem…"
+            disabled
+              ? "Aguardando conexão…"
+              : editingMessage
+                ? "Edite sua mensagem…"
+                : "Escreva sua mensagem…"
           }
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            onChange(e.target.value);
+            if (e.target.value.trim() && !editingMessage) {
+              onTyping?.();
+            }
+          }}
           onKeyDown={(e) => {
+            if (e.key === "Escape" && editingMessage && onCancelEdit) {
+              e.preventDefault();
+              onCancelEdit();
+              return;
+            }
+            if (
+              e.key === "ArrowUp" &&
+              !value &&
+              !editingMessage &&
+              onEditLast
+            ) {
+              e.preventDefault();
+              onEditLast();
+              return;
+            }
             if (
               e.key === "Enter" &&
               !e.shiftKey &&
@@ -99,19 +151,27 @@ export default function MessageInput({
         />
         <button
           className="send-button"
-          aria-label="Enviar mensagem"
+          aria-label={editingMessage ? "Salvar edição" : "Enviar mensagem"}
           onClick={onSend}
           disabled={disabled || !value.trim()}
         >
-          <FiSend />
+          {editingMessage ? <FiCheck /> : <FiSend />}
         </button>
       </div>
       <div className="composer-hint">
         <span>
-          <kbd>Enter</kbd> para enviar · <kbd>Shift + Enter</kbd> para nova
-          linha
+          <kbd>Enter</kbd> para {editingMessage ? "salvar" : "enviar"} ·{" "}
+          {editingMessage ? (
+            <>
+              <kbd>Esc</kbd> para cancelar
+            </>
+          ) : (
+            <>
+              <kbd>Shift + Enter</kbd> para nova linha
+            </>
+          )}
         </span>
-        {value.length > 3500 && <span>{value.length}/4000</span>}
+        {value.length > 850 && <span>{value.length}/1000</span>}
         <span>
           Um olá faz a diferença <span className="purple-heart">♡</span>
         </span>

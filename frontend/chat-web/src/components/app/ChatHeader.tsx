@@ -14,8 +14,9 @@ export default function ChatHeader({
   search: string;
   onSearch: (value: string) => void;
 }) {
-  const { selected, select, demo } = useChat();
+  const { selected, select, demo, typingUsers } = useChat();
   if (!selected) return null;
+  const isTyping = Boolean(typingUsers[selected.id]);
   return (
     <>
       <header className="chat-header">
@@ -27,11 +28,21 @@ export default function ChatHeader({
           <FiArrowLeft />
         </button>
         <button className="chat-person" onClick={onProfile}>
-          <Avatar name={selected.username} src={selected.profileImgUrl} />
+          <Avatar
+            name={selected.username}
+            src={selected.profileImgUrl}
+            online={selected.online}
+          />
           <span>
             <b>{selected.username}</b>
-            <small>
-              {demo ? "Conversa de demonstração" : "Conversa direta"}
+            <small className={isTyping ? "typing-text" : ""}>
+              {isTyping
+                ? "Digitando…"
+                : selected.online
+                  ? "Online agora"
+                  : demo
+                    ? "Conversa de demonstração"
+                    : "Conversa direta"}
             </small>
           </span>
         </button>

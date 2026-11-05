@@ -9,39 +9,47 @@ export const demoProfile: Profile = {
   username: "Você",
   description: "Sempre aberto a uma boa conversa. ✨",
 };
+const time = (hour: number, minute: number) => {
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  return date.toISOString();
+};
 export const demoContacts: ChatUser[] = [
   {
     id: "ana",
     username: "Ana Martins",
     description: "Design, café e boas ideias. ☕",
     lastMessage: "Adorei! Vamos tirar essa ideia do papel? ✨",
+    lastMessageAt: time(10, 34),
     unread: 2,
+    online: true,
   },
   {
     id: "lucas",
     username: "Lucas Oliveira",
     description: "Criando coisas para a web.",
     lastMessage: "Te mando o link depois!",
+    lastMessageAt: time(9, 45),
     unread: 1,
+    online: true,
   },
   {
     id: "bia",
     username: "Beatriz Costa",
     description: "Um pouco de arte todos os dias.",
     lastMessage: "Obrigada pela indicação! 💜",
+    lastMessageAt: time(9, 20),
+    online: false,
   },
   {
     id: "pedro",
     username: "Pedro Santos",
     description: "Música, viagens e tecnologia.",
     lastMessage: "Combinado, até amanhã.",
+    lastMessageAt: time(8, 10),
+    online: false,
   },
 ];
-const time = (hour: number, minute: number) => {
-  const date = new Date();
-  date.setHours(hour, minute, 0, 0);
-  return date.toISOString();
-};
 export const demoMessages: Record<string, ChatMessage[]> = {
   ana: [
     {
@@ -68,6 +76,7 @@ export const demoMessages: Record<string, ChatMessage[]> = {
       receiverUsername: "Ana Martins",
       content: "Tudo ótimo! Que coincidência, também estava pensando nisso 😊",
       sentAt: time(10, 32),
+      readAt: time(10, 33),
     },
     {
       id: "a4",
@@ -77,6 +86,7 @@ export const demoMessages: Record<string, ChatMessage[]> = {
       content:
         "Que tal conversarmos hoje à tarde? Podemos organizar tudo por aqui.",
       sentAt: time(10, 32),
+      readAt: time(10, 33),
     },
     {
       id: "a5",

@@ -5,8 +5,17 @@ import { errorMessage } from "../../utils/axiosConfig";
 import Modal from "../ui/Modal";
 import Avatar from "../ui/Avatar";
 export default function FriendsPanel({ onClose }: { onClose: () => void }) {
-  const { requests, loadRequests, invite, respond, demo } = useChat();
+  const {
+    requests,
+    sentRequests,
+    loadRequests,
+    invite,
+    respond,
+    cancelRequest,
+    demo,
+  } = useChat();
   const [email, setEmail] = useState("");
+  const [tab, setTab] = useState<"received" | "sent">("received");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -37,6 +46,7 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
           : `Convite enviado para ${email}.`,
       );
       setEmail("");
+      setTab("sent");
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -54,6 +64,19 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
           ? "Nova conexão! Seu amigo já aparece nas conversas."
           : "Convite recusado.",
       );
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const cancel = async (id: number) => {
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    try {
+      await cancelRequest(id);
+      setSuccess("Convite cancelado.");
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -95,38 +118,79 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
           {success}
         </p>
       )}
-      <div className="request-heading">
-        <h3>Convites recebidos</h3>
-        <span>{requests.length}</span>
+      <div className="chat-tabs requests-tabs">
+        <button
+          type="button"
+          className={tab === "received" ? "active" : ""}
+          onClick={() => setTab("received")}
+        >
+          Recebidos ({requests.length})
+        </button>
+        <button
+          type="button"
+          className={tab === "sent" ? "active" : ""}
+          onClick={() => setTab("sent")}
+        >
+          Enviados ({sentRequests.length})
+        </button>
       </div>
       {loading ? (
         <p role="status" className="muted">
           Carregando convites…
         </p>
-      ) : requests.length ? (
-        requests.map((request) => (
+      ) : tab === "received" ? (
+        requests.length ? (
+          requests.map((request) => (
+            <article className="friend-request" key={request.id}>
+              <Avatar
+                name={request.senderUsername}
+                src={request.senderProfileImgUrl}
+              />
+              <div>
+                <b>{request.senderUsername}</b>
+                <small>{request.senderEmail}</small>
+              </div>
+              <button
+                className="icon-button accept-button"
+                disabled={busy}
+                aria-label={`Aceitar convite de ${request.senderUsername}`}
+                onClick={() => void answer(request.id, true)}
+              >
+                <FiCheck />
+              </button>
+              <button
+                className="icon-button"
+                disabled={busy}
+                aria-label={`Recusar convite de ${request.senderUsername}`}
+                onClick={() => void answer(request.id, false)}
+              >
+                <FiX />
+              </button>
+            </article>
+          ))
+        ) : (
+          <div className="requests-empty">
+            <FiUsers />
+            <b>Tudo tranquilo por aqui</b>
+            <p>Seus novos convites vão aparecer neste espaço.</p>
+          </div>
+        )
+      ) : sentRequests.length ? (
+        sentRequests.map((request) => (
           <article className="friend-request" key={request.id}>
             <Avatar
-              name={request.senderUsername}
-              src={request.senderProfileImgUrl}
+              name={request.receiverUsername || request.receiverEmail || "?"}
+              src={request.receiverProfileImgUrl}
             />
             <div>
-              <b>{request.senderUsername}</b>
-              <small>{request.senderEmail}</small>
+              <b>{request.receiverUsername || request.receiverEmail}</b>
+              <small>{request.receiverEmail || "Aguardando resposta"}</small>
             </div>
-            <button
-              className="icon-button accept-button"
-              disabled={busy}
-              aria-label={`Aceitar convite de ${request.senderUsername}`}
-              onClick={() => void answer(request.id, true)}
-            >
-              <FiCheck />
-            </button>
             <button
               className="icon-button"
               disabled={busy}
-              aria-label={`Recusar convite de ${request.senderUsername}`}
-              onClick={() => void answer(request.id, false)}
+              aria-label={`Cancelar convite para ${request.receiverUsername || request.receiverEmail}`}
+              onClick={() => void cancel(request.id)}
             >
               <FiX />
             </button>
@@ -134,9 +198,9 @@ export default function FriendsPanel({ onClose }: { onClose: () => void }) {
         ))
       ) : (
         <div className="requests-empty">
-          <FiUsers />
-          <b>Tudo tranquilo por aqui</b>
-          <p>Seus novos convites vão aparecer neste espaço.</p>
+          <FiMail />
+          <b>Nenhum convite pendente</b>
+          <p>Os convites que você enviar aparecem aqui até serem respondidos.</p>
         </div>
       )}
     </Modal>

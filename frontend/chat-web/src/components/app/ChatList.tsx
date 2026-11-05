@@ -10,7 +10,8 @@ export default function ChatList({
   unreadOnly: boolean;
   onFriends: () => void;
 }) {
-  const { contacts, selected, select, loading, error, refresh } = useChat();
+  const { contacts, selected, select, loading, error, refresh, typingUsers } =
+    useChat();
   const visible = contacts
     .filter(
       (c) =>
@@ -61,6 +62,7 @@ export default function ChatList({
               key={chat.id}
               chat={chat}
               selected={selected?.id === chat.id}
+              typing={Boolean(typingUsers[chat.id])}
               onClick={() => select(chat.id)}
             />
           ))}

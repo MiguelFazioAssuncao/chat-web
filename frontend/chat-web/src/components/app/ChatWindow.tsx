@@ -13,6 +13,7 @@ import Message from "./Message";
 import MessageInput from "./MessageInput";
 import UserProfilePanel from "./UserProfilePanel";
 import Modal from "../ui/Modal";
+import type { ChatMessage } from "../../types/chat";
 export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
   const {
     selected,
@@ -21,11 +22,16 @@ export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
     connection,
     demo,
     send,
+    sendTyping,
+    editMessage,
     removeMessage,
     historyLoading,
     historyError,
   } = useChat();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(
+    null,
+  );
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [index, setIndex] = useState(0);
@@ -37,6 +43,7 @@ export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
   const end = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const nearBottom = useRef(true);
+  const lastTypingSent = useRef(0);
   const results = search.trim()
     ? messages
         .filter((m) =>
@@ -52,6 +59,7 @@ export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
     setIndex(0);
     setSearching(false);
     setShowProfile(false);
+    setEditingMessage(null);
     nearBottom.current = true;
   }, [selected?.id]);
   useEffect(() => {
@@ -72,6 +80,10 @@ export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
     setError("");
     try {
       await removeMessage(deleteId);
+      if (editingMessage?.id === deleteId && selected) {
+        setEditingMessage(null);
+        setDrafts((prev) => ({ ...prev, [selected.id]: "" }));
+      }
       setDeleteId(null);
     } catch (err) {
       setError(errorMessage(err));
@@ -105,7 +117,37 @@ export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
       </section>
     );
   const draft = drafts[selected.id] || "";
+  const startEditing = (msg: ChatMessage) => {
+    setEditingMessage(msg);
+    setDrafts((prev) => ({ ...prev, [selected.id]: msg.content }));
+  };
+  const cancelEditing = () => {
+    setEditingMessage(null);
+    setDrafts((prev) => ({ ...prev, [selected.id]: "" }));
+  };
+  const editLastOwnMessage = () => {
+    const lastOwn = [...messages]
+      .reverse()
+      .find((m) => m.senderId === profile.id && !m.pending && !m.failed);
+    if (lastOwn) startEditing(lastOwn);
+  };
+  const handleTyping = () => {
+    const now = Date.now();
+    if (now - lastTypingSent.current > 2000) {
+      lastTypingSent.current = now;
+      sendTyping(true);
+    }
+  };
   const submit = () => {
+    if (editingMessage) {
+      const targetId = editingMessage.id;
+      const nextText = draft.trim();
+      if (!nextText) return;
+      setEditingMessage(null);
+      setDrafts((prev) => ({ ...prev, [selected.id]: "" }));
+      void editMessage(targetId, nextText);
+      return;
+    }
     if (send(draft)) {
       setDrafts((prev) => ({ ...prev, [selected.id]: "" }));
       nearBottom.current = true;
@@ -223,7 +265,10 @@ export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
               <Message
                 message={message}
                 isSender={message.senderId === profile.id}
-                highlighted={activeId === message.id}
+                highlighted={
+                  activeId === message.id || editingMessage?.id === message.id
+                }
+                onEdit={() => startEditing(message)}
                 onDelete={() => {
                   setError("");
                   setDeleteId(message.id);
@@ -245,6 +290,10 @@ export default function ChatWindow({ onFriends }: { onFriends: () => void }) {
           setDrafts((prev) => ({ ...prev, [selected.id]: value }))
         }
         onSend={submit}
+        onTyping={handleTyping}
+        editingMessage={editingMessage}
+        onCancelEdit={cancelEditing}
+        onEditLast={editLastOwnMessage}
         disabled={connection !== "connected"}
       />
       {showProfile && (

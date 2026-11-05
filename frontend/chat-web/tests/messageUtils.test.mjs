@@ -12,7 +12,13 @@ const compiled = ts.transpileModule(source, {
     target: ts.ScriptTarget.ES2022,
   },
 }).outputText;
-const { mergeIncoming, mergeHistory } = await import(
+const {
+  mergeIncoming,
+  mergeHistory,
+  applyEditedMessage,
+  applyDeletedMessage,
+  applyReadReceipt,
+} = await import(
   `data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`
 );
 const message = (id, props = {}) => ({
@@ -78,4 +84,33 @@ test("history removes old deleted messages and confirmed optimistic copies", () 
     result.map((m) => m.id),
     ["saved"],
   );
+});
+test("applies message edits and deletions without mutating other items", () => {
+  const edited = applyEditedMessage(
+    [message("m1"), message("m2")],
+    message("m1", { content: "Editada", editedAt: "2026-10-10T10:05:00Z" }),
+  );
+  assert.equal(edited[0].content, "Editada");
+  assert.equal(edited[0].editedAt, "2026-10-10T10:05:00Z");
+  assert.equal(edited[1].content, "Olá");
+
+  const remaining = applyDeletedMessage(edited, "m1");
+  assert.deepEqual(
+    remaining.map((m) => m.id),
+    ["m2"],
+  );
+});
+test("marks unread outgoing messages with read timestamp", () => {
+  const updated = applyReadReceipt(
+    [
+      message("m1", { senderId: "you", readAt: "2026-10-10T10:01:00Z" }),
+      message("m2", { senderId: "you" }),
+      message("m3", { senderId: "ana" }),
+    ],
+    "you",
+    "2026-10-10T10:06:00Z",
+  );
+  assert.equal(updated[0].readAt, "2026-10-10T10:01:00Z");
+  assert.equal(updated[1].readAt, "2026-10-10T10:06:00Z");
+  assert.equal(updated[2].readAt, undefined);
 });

@@ -18,7 +18,7 @@ export default function SideBar({
 }) {
   const [search, setSearch] = useState("");
   const [unread, setUnread] = useState(false);
-  const { profile, demo } = useChat();
+  const { profile, requests, demo } = useChat();
   return (
     <aside className="sidebar">
       <nav className="nav-rail" aria-label="Menu do chat">
@@ -42,6 +42,9 @@ export default function SideBar({
             onClick={onFriends}
           >
             <FiUsers />
+            {requests.length > 0 && (
+              <i className="rail-badge">{requests.length}</i>
+            )}
           </button>
         </div>
         <div>

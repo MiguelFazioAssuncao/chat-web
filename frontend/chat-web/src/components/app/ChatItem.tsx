@@ -3,10 +3,12 @@ import type { ChatUser } from "../../types/chat";
 export default function ChatItem({
   chat,
   selected,
+  typing = false,
   onClick,
 }: {
   chat: ChatUser;
   selected: boolean;
+  typing?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -15,7 +17,11 @@ export default function ChatItem({
       onClick={onClick}
       aria-pressed={selected}
     >
-      <Avatar name={chat.username} src={chat.profileImgUrl} />
+      <Avatar
+        name={chat.username}
+        src={chat.profileImgUrl}
+        online={chat.online}
+      />
       <span className="chat-item-copy">
         <span>
           <b>{chat.username}</b>
@@ -29,7 +35,11 @@ export default function ChatItem({
           )}
         </span>
         <span>
-          <p>{chat.lastMessage || "Comece uma boa conversa"}</p>
+          {typing ? (
+            <p className="typing-text">Digitando…</p>
+          ) : (
+            <p>{chat.lastMessage || "Comece uma boa conversa"}</p>
+          )}
           {Boolean(chat.unread) && (
             <i className="unread-count">{chat.unread}</i>
           )}

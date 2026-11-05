@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   FiArrowRight,
@@ -47,12 +47,34 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [warmingUp, setWarmingUp] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const copy = content[mode];
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      if (active) setWarmingUp(true);
+    }, 3000);
+    api
+      .get("/health", { signal: controller.signal })
+      .catch(() => {})
+      .finally(() => {
+        window.clearTimeout(timer);
+        if (active) setWarmingUp(false);
+      });
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, []);
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
@@ -104,6 +126,11 @@ export default function AuthForm({ mode }: { mode: AuthMode }) {
         </div>
       ) : (
         <form onSubmit={submit}>
+          {warmingUp && !error && (
+            <p className="feedback" role="status">
+              Iniciando o servidor… O primeiro acesso pode levar até 1 minuto.
+            </p>
+          )}
           {error && (
             <p className="feedback feedback-error" role="alert">
               {error}
