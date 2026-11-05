@@ -1,8 +1,8 @@
-# ChatWeb
+# ChatWeb Frontend
 
-Interface built with React 19, TypeScript, and Vite. Includes a landing page, authentication, password recovery, and chat with real-time messaging, profiles, and friend requests.
+React 19, TypeScript, and Vite client for ChatWeb.
 
-## Run
+## Development
 
 Requires Node.js 20.19+ or 22.12+.
 
@@ -11,45 +11,33 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The Spring Boot backend must run at `http://localhost:8080` for authentication and live conversations. Vite forwards `/auth`, `/api`, `/ws`, and `/uploads` to the backend.
+Open `http://localhost:5173`. In development, Vite proxies `/auth`, `/api`, `/ws`, and `/uploads` to `http://localhost:8080`.
 
-The `/demo` route works without a backend. Its contacts and messages are illustrative, and changes stay in the browser's local storage. Demo invitations do not send emails or create real friendships.
+The `/demo` route runs entirely in the browser using `localStorage` without requiring the backend.
 
 ## Routes
 
-- `/`: product introduction.
-- `/auth/login`, `/auth/register`: login and registration.
-- `/auth/forgot-password`, `/auth/reset-password?token=…`: password recovery.
-- `/app`: authenticated chat.
-- `/demo`: interactive demo.
+- `/` — Product landing page
+- `/auth/login`, `/auth/register` — Sign in and account creation
+- `/auth/forgot-password`, `/auth/reset-password?token=…` — Password recovery
+- `/app` — Authenticated workspace
+- `/demo` — Interactive local demo
 
-## Experience
+## Features
 
-Light and dark themes, mobile navigation, contact and message search, an unread filter, per-conversation drafts during the session, an emoji picker, and multiline messages. Use Enter to send and Shift + Enter to insert a new line. Dialogs use the native `dialog` element, with focus trapping and Escape to close.
+- Light and dark themes (`data-theme`)
+- Conversation search, unread filter, and in-chat message search with match navigation
+- Real-time messaging over STOMP/SockJS with optimistic send reconciliation
+- Message editing (edit button or `ArrowUp` from an empty composer) and deletion
+- Read receipts (`✓` sent, `✓✓` read), live typing indicator, and online presence dots
+- Incoming and sent friend request management with live notifications
+- Profile editing, avatar upload, and password update
 
-A single STOMP connection shares updates between the conversation list and the active conversation. The backend acknowledges sends with the persisted ID and `clientMessageId`, preventing duplication when identical messages are sent in sequence. The frontend preserves updates received while message history is loading. Update the frontend and backend together.
-
-## Configuration and production
-
-Use `.env.example` as a reference. Without `VITE_API_URL`, requests use the same origin. For a separate backend, set its origin in `VITE_API_URL` and configure CORS in Spring Boot. This variable is public: do not include secrets.
-
-```sh
-npm test
-npm run build
-npm run preview
-```
-
-Serve `dist/` with a route fallback to `index.html`. In a same-origin deployment, the server must forward `/auth`, `/api`, `/ws`, and `/uploads` to Spring Boot, including WebSocket transport. The Vite proxy configuration applies only during development.
-
-## Verification
-
-The tests in `tests/messageUtils.test.mjs` validate reconciliation of identical sends, redelivery, acknowledgments after history loads, preservation of messages during requests, and removal of older deleted messages. They run with the Node test runner and the TypeScript dependency already included in the project.
-
-Backend unit tests can run without PostgreSQL:
+## Scripts
 
 ```sh
-cd ../../backend/chatweb
-bash ./mvnw -Dtest=ChatControllerTest,MessageServiceTest,UserServiceTest test
+npm run lint     # ESLint + TypeScript checks
+npm test         # Node test runner for message reconciliation utilities
+npm run build    # Type-check and build production bundle into dist/
+npm run preview  # Preview production build locally
 ```
-
-The original `ChatwebApplicationTests` test loads the full application context and depends on the database and service configuration.
