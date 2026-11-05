@@ -12,6 +12,10 @@ public record FriendRequestDTO(
         String senderEmail,
         String senderProfileImgUrl,
         String senderDescription,
+        String receiverUsername,
+        String receiverEmail,
+        String receiverProfileImgUrl,
+        String receiverDescription,
         String status,
         LocalDateTime createdAt
 ) {
@@ -22,6 +26,10 @@ public record FriendRequestDTO(
                 .senderEmail(request.getSender().getEmail())
                 .senderProfileImgUrl(request.getSender().getProfileImgUrl())
                 .senderDescription(request.getSender().getDescription())
+                .receiverUsername(request.getReceiver().getUsername())
+                .receiverEmail(request.getReceiver().getEmail())
+                .receiverProfileImgUrl(request.getReceiver().getProfileImgUrl())
+                .receiverDescription(request.getReceiver().getDescription())
                 .status(request.getStatus().name())
                 .createdAt(request.getCreatedAt())
                 .build();

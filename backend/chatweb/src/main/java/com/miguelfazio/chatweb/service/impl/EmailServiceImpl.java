@@ -1,15 +1,19 @@
 package com.miguelfazio.chatweb.service.impl;
 
 import com.miguelfazio.chatweb.service.EmailService;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
 
     private final JavaMailSender mailSender;
 
@@ -23,7 +27,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(body, false);
             mailSender.send(message);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("Could not send email to {}: {}", to, e.getMessage());
         }
     }
 }

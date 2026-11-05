@@ -31,4 +31,10 @@ public class Message {
 
     @Column(nullable = false)
     private LocalDateTime sentAt;
+
+    @Column(name = "edited_at")
+    private LocalDateTime editedAt;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
 }

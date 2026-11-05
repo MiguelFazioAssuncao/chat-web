@@ -4,8 +4,9 @@ import com.miguelfazio.chatweb.dto.UserProfileDTO;
 import com.miguelfazio.chatweb.entity.User;
 import com.miguelfazio.chatweb.repository.UserRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -15,7 +16,8 @@ import static org.mockito.Mockito.*;
 
 class UserServiceTest {
     private final UserRepository users = mock(UserRepository.class);
-    private final UserService service = new UserService(users);
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private final UserService service = new UserService(users, encoder);
 
     @Test
     void rejectsAnotherUsersName() {
@@ -55,5 +57,21 @@ class UserServiceTest {
         assertThrows(ResponseStatusException.class,
                 () -> service.updateAvatar(UUID.randomUUID(), oversized));
         verifyNoInteractions(users);
+    }
+
+    @Test
+    void validatesCurrentPasswordBeforeChangingPassword() {
+        UUID id = UUID.randomUUID();
+        User user = User.builder().id(id).username("ana").password(encoder.encode("old-pass")).build();
+        when(users.findById(id)).thenReturn(Optional.of(user));
+
+        ResponseStatusException wrongPass = assertThrows(ResponseStatusException.class,
+                () -> service.changePassword(id, "wrong-pass", "new-secret"));
+        assertEquals(400, wrongPass.getStatusCode().value());
+        verify(users, never()).save(any());
+
+        service.changePassword(id, "old-pass", "new-secret");
+        assertTrue(encoder.matches("new-secret", user.getPassword()));
+        verify(users).save(user);
     }
 }

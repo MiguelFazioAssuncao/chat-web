@@ -6,7 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -19,6 +20,8 @@ import java.util.UUID;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
 
@@ -28,13 +31,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        final String path = request.getRequestURI();
-
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("Header Authorization ausente ou mal formatado: " + authHeader);
             filterChain.doFilter(request, response);
             return;
         }
@@ -44,24 +45,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             jwtService.validateToken(jwt);
         } catch (ExpiredJwtException e) {
-            System.out.println("Token expirado: " + e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token expirado");
+            log.debug("Expired JWT token: {}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token expired");
             return;
         } catch (JwtException e) {
-            System.out.println("Token inválido: " + e.getMessage());
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token inválido");
+            log.debug("Invalid JWT token: {}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
             return;
         }
 
-        UUID userId = null;
-        String username = null;
+        UUID userId;
+        String username;
 
         try {
             userId = jwtService.extractUserId(jwt);
             username = jwtService.extractUsername(jwt);
         } catch (Exception e) {
-            System.out.println("Erro ao extrair dados do token: " + e.getMessage());
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token inválido");
+            log.debug("Failed to extract claims from JWT: {}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
             return;
         }
 
@@ -78,9 +79,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
-            System.out.println("Usuário autenticado: " + userDetails.getUsername());
-        } else {
-            System.out.println("Usuário já autenticado ou token inválido.");
         }
 
         filterChain.doFilter(request, response);

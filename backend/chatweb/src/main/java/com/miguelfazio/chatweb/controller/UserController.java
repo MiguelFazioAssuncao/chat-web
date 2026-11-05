@@ -1,5 +1,6 @@
 package com.miguelfazio.chatweb.controller;
 
+import com.miguelfazio.chatweb.dto.ChangePasswordRequest;
 import com.miguelfazio.chatweb.dto.UserProfileDTO;
 import com.miguelfazio.chatweb.security.CustomUserDetails;
 import com.miguelfazio.chatweb.security.JwtService;
@@ -19,7 +20,7 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
-    private final JwtService  jwtService;
+    private final JwtService jwtService;
 
     public UserController(UserService userService, JwtService jwtService) {
         this.userService = userService;
@@ -49,9 +50,18 @@ public class UserController {
         ));
     }
 
+    @PostMapping("/password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(userDetails.getId(), request.currentPassword(), request.newPassword());
+        return ResponseEntity.ok(Map.of("message", "Password updated successfully"));
+    }
 
     @PostMapping("/avatar")
-    public ResponseEntity<String> updateAvatar(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam("avatar")MultipartFile file) throws IOException {
+    public ResponseEntity<String> updateAvatar(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam("avatar") MultipartFile file) throws IOException {
         UUID id = userDetails.getId();
         String url = userService.updateAvatar(id, file);
         return ResponseEntity.ok(url);

@@ -2,6 +2,7 @@ package com.miguelfazio.chatweb.repository;
 
 import com.miguelfazio.chatweb.entity.Message;
 import com.miguelfazio.chatweb.entity.User;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +19,24 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
         ORDER BY m.sentAt DESC
     """)
     List<Message> findMessagesBetweenUsers(@Param("user") User user, @Param("friend") User friend);
+
+    @Query("""
+        SELECT m FROM Message m
+        WHERE (m.sender = :user AND m.receiver = :friend)
+           OR (m.sender = :friend AND m.receiver = :user)
+        ORDER BY m.sentAt DESC
+    """)
+    List<Message> findMessagesBetweenUsers(@Param("user") User user, @Param("friend") User friend, Pageable pageable);
+
+    @Query("""
+        SELECT COUNT(m) FROM Message m
+        WHERE m.sender = :friend AND m.receiver = :user AND m.readAt IS NULL
+    """)
+    long countUnreadMessages(@Param("user") User user, @Param("friend") User friend);
+
+    @Query("""
+        SELECT m FROM Message m
+        WHERE m.sender = :friend AND m.receiver = :user AND m.readAt IS NULL
+    """)
+    List<Message> findUnreadMessages(@Param("user") User user, @Param("friend") User friend);
 }
